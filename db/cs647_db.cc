@@ -1,4 +1,6 @@
-//  YCSB-C       
+//
+//  cs647_db.cc
+//  YCSB-C        
 //                                                       
 //  Created by Manos Anagnostakis on 10/23/22.           
 //  Copyright (c) 2022 Manos Anagnostakis <manosanag@csd.uoc.gr>.
@@ -8,22 +10,22 @@
 
 namespace ycsbc {
 
-int RedisDB::Read(const string &table, const string &key,
-         const vector<string> *fields,
-         vector<KVPair> &result) {   }
+int CS647DB::Read(const std::string &table, const std::string &key,
+         const std::vector<std::string> *fields,
+         std::vector<KVPair> &result) {   }
 
-int Scan(const std::string &table, const std::string &key,
+int CS647DB::Scan(const std::string &table, const std::string &key,
            int len, const std::vector<std::string> *fields,
            std::vector<std::vector<KVPair>> &result){}
 
-int Update(const std::string &table, const std::string &key,
+int CS647DB::Update(const std::string &table, const std::string &key,
              std::vector<KVPair> &values){}
 
-int Insert(const std::string &table, const std::string &key,
+int CS647DB::Insert(const std::string &table, const std::string &key,
              std::vector<KVPair> &values){}       
 
-int Delete(const std::string &table, const std::string &key){}
+int CS647DB::Delete(const std::string &table, const std::string &key){}
 
-};
+} // namespace ycsbc
 
 
