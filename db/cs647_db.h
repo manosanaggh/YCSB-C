@@ -10,7 +10,7 @@
 #define YCSB_C_CS647_DB_H_
 
 #include "core/db.h"
-
+#include "core/properties.h"
 #include <string>
 #include <vector>
 
