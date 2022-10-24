@@ -1,5 +1,6 @@
 #include "ti_api.hpp"
 #include "tb_api.hpp"
+#include "db/cs647_db.h"
 
 extern Tinyindex *ti;
 extern pthread_rwlock_t rwlock;
@@ -10,22 +11,34 @@ std::vector<std::string> keys;
 std::vector<std::string> values;
 
 int main(int argc, char **argv){
+	pthread_t threads[1024];
+
 	mode = atoi(argv[1]);
         nprocs = atoi(argv[2]); 
 	blob_size = atoi(argv[3]);
 	raw_size = atoi(argv[4]);
 
+        if (pthread_rwlock_init(&rwlock, NULL) != 0) {                             
+                printf("\n rwlock init has failed\n");                                                        
+                return 1;                                                                                 
+        }                                                                                    
+        pthread_barrier_init(&barrier, NULL, nprocs+1);    
+
 	ti = new Tinyindex();
 
 	uint32_t offset = 0, c = 0;
 	std::vector<Tinyblob*> *pv = NULL;
+	std::vector<ycsbc::DB::KVPair> input, result;
+	ycsbc::CS647DB db;
+	db.Init();
+	recover("device/raw/pairs.txt"); //comment out to run persist
 
-	//recover("device/raw/pairs.txt");
-
+	/* PERSIST START */
+/*
         for(int i = 0; i < nprocs; i++) //uncomment to run with allocate      
                 pthread_create(&threads[i], NULL, (void* (*)(void*))&tb_allocate_blob, NULL); //uncomment to run with allocate
 	pthread_barrier_wait(&barrier);
-	
+
 	for(int i = 0; i < 15; i++){
 		keys.push_back("g" + std::to_string(i));
 		values.push_back("Value" + std::to_string(i));
@@ -34,45 +47,35 @@ int main(int argc, char **argv){
         pthread_barrier_destroy(&barrier);
         pthread_barrier_init(&barrier, NULL, 2);
 
-	for(int i = 0; i < keys.size(); i++){
-		Thread_info *tinfo = new Thread_info();
-		tinfo->key = keys[i];
-		tinfo->value = values[i];
-		pthread_create(&threads[i], NULL, (void* (*)(void*))&put, tinfo);
-		pthread_barrier_wait(&barrier);
-		if(tinfo->result == -1)
-			std::cout << "[PUT] No free blobs!" << std::endl;
+	for(int i = 0; i < 10; i++){
+		input.push_back(std::make_pair(keys[i], values[i]));
+		if(db.Insert("", "g"+std::to_string(i), input) == -1)
+			std::cout << "[INSERT] Key already exists!" << std::endl;
+		input.clear();
 	}
 
-	
+        if(db.Insert("", "g0", input) == -1)
+                std::cout << "[INSERT] Key already exists!" << std::endl;
 
-	/*pthread_barrier_destroy(&barrier);
-	pthread_barrier_init(&barrier, NULL, 2);
+	input.clear();
 
-	for(int i = 0; i < 3; i++){
-		Thread_info *tinfo = new Thread_info();
-		if(i < 2)
-			tinfo->key = "g" + std::to_string(i);
-		else
-			tinfo->key = "g80";
-		pthread_create(&threads[i], NULL, (void* (*)(void*))&get, tinfo);
-		pthread_barrier_wait(&barrier);
-		if(!tinfo->pv.empty()){
-                        for(auto x : tinfo->pv){
-                                if(!strcmp((const char*)x->__io_buffer, "Value0")){
-                                        c = 1;
-                                        std::cout << "[GET] Found value: " << (char*)x->__io_buffer << " in key " << tinfo->key << std::endl;
-                                }
-                        }
-                        if(!c)
-                                std::cout << "[GET] Value not found in key " << tinfo->key << std::endl;
-                }
-                else
-                        std::cout << "[GET] Key does not exist!" << std::endl;
-	}*/
+        for(int i = 0; i < 10; i++)
+                input.push_back(std::make_pair(keys[i], values[i]));
 
-	pthread_barrier_destroy(&barrier);
-	pthread_barrier_init(&barrier, NULL, 2);
+        if(db.Update("", "g0", input) == -1)
+                std::cout << "[UPDATE] Key does not exist!" << std::endl;
+
+        if(db.Update("", "g80", input) == -1)
+                std::cout << "[UPDATE] Key does not exist!" << std::endl;
+
+	if(db.Read("", "g0", NULL, result) == -1)
+		std::cout << "[READ] Key does not exist!" << std::endl;
+
+        if(db.Read("", "g80", NULL, result) == -1) 
+                std::cout << "[READ] Key does not exist!" << std::endl;
+
+	for(auto x : result)
+		std::cout << "[READ] (" << x.first << "," << x.second << ")" << std::endl;
 
 	for(int i = 0; i < 3; i++){
 		Thread_info *tinfo = new Thread_info();
@@ -80,60 +83,33 @@ int main(int argc, char **argv){
 			tinfo->key = "data10";
 		else
 			tinfo->key = keys[i];
-                pthread_create(&threads[i], NULL, (void* (*)(void*))&erase, tinfo);
-		pthread_barrier_wait(&barrier);
-		if(tinfo->result == 0)
-			std::cout << "[ERASE] Successful on key " << tinfo->key << std::endl;
+		if(db.Delete("", tinfo->key) == 0)
+			std::cout << "[DELETE] Successful on key " << tinfo->key << std::endl;
 		else
-			std::cout << "[ERASE] Key " << tinfo->key << " does not exist!" << std::endl;
+			std::cout << "[DELETE] Key " << tinfo->key << " does not exist!" << std::endl;
         }
 
 	persist("device/raw/pairs.txt");
+*/
 
-        ti->scanner = scan_init();
-        if(!ti->scanner.is_open()) {                                                             
-                perror("Error open");                                                    
-        }  
-	std::cout << "[SCAN_INIT] First pair: " << ti->next_pair << std::endl;
-
-	pthread_barrier_destroy(&barrier);	
-	pthread_barrier_init(&barrier, NULL, 2);
-
-	for(int i = 0; i < 3; i++){
-		pthread_create(&threads[i], NULL, (void* (*)(void*))&get_next, (void*)&ti->scanner);
-		pthread_barrier_wait(&barrier);
-		std::cout << "[GET_NEXT] Next pair: " << ti->next_pair << std::endl;
-	}
-
-	std::cout << "[GET_SCAN_KEY] " << get_scan_key(ti->next_pair) << std::endl;
-
-	c = 0;
-
-                if((pv = get_scan_value(ti->next_pair)) != NULL){
-                        for(auto x : *pv){
-                                if(!strcmp((const char*)x->__io_buffer, "Value7")){
-                                        c = 1;
-                                        std::cout << "[GET_SCAN_VALUE] Found value: " << (char*)x->__io_buffer 
-						<< " in pair " << ti->next_pair 
-						<< std::endl;
-                                }
-                        }                                               
-                        if(!c)                                                      
-                                std::cout << "[GET_SCAN_VALUE] Value not found in pair " << ti->next_pair << std::endl;
-                }                                                              
-                else                                                               
-                        std::cout << "[GET_SCAN_VALUE] Key does not exist!" << std::endl;  
+	/* PERSIST END */
 	
-	int r;
-	if((r = close_scanner(&ti->scanner)) == -1)
-			std::cout << "[CLOSE_SCANNER] *Error* Closing the scanner failed!";	
+	std::vector<std::vector<ycsbc::DB::KVPair>> result2;
 
+	if(db.Scan("", "g9", 5, NULL, result2) == -1)
+		std::cout << "[SCAN] Error with scan - check further!" << std::endl;
+
+	for(auto x : result2){
+		for(auto y : x){
+			std::cout << "[SCAN] (" << y.first << "," << y.second << ")" << std::endl; 
+		}
+	}
+	
 	for(auto x : ti->__kv_store)
 		for(auto y : x.second)
 			std::cout << "Key: " << x.first << " | Value of blob " << y->index() << ": " << (char*)y->__io_buffer << std::endl;
 
         pthread_barrier_destroy(&barrier);
         pthread_rwlock_destroy(&rwlock);
-
 	return 0;
 }

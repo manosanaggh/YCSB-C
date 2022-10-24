@@ -29,9 +29,9 @@ int main(int argc, char **argv){
 	uint32_t offset = 0, c = 0;
 	std::vector<Tinyblob*> *pv = NULL;
 
-	recover("device/raw/pairs.txt");
+//	recover("device/raw/pairs.txt");
 
-  /*      for(int i = 0; i < nprocs; i++) //uncomment to run with allocate
+        for(int i = 0; i < nprocs; i++) //uncomment to run with allocate
                 pthread_create(&threads[i], NULL, (void* (*)(void*))&tb_allocate_blob, NULL); //uncomment to run with allocate
 	pthread_barrier_wait(&barrier);
 	
@@ -78,7 +78,7 @@ int main(int argc, char **argv){
                 }
                 else
                         std::cout << "[GET] Key does not exist!" << std::endl;
-*/	
+	
 	/*pthread_barrier_destroy(&barrier);
 	pthread_barrier_init(&barrier, NULL, 2);
 
@@ -104,7 +104,7 @@ int main(int argc, char **argv){
                         std::cout << "[GET] Key does not exist!" << std::endl;
 	}*/
 
-/*	pthread_barrier_destroy(&barrier);
+	pthread_barrier_destroy(&barrier);
 	pthread_barrier_init(&barrier, NULL, 2);
 
 	for(int i = 0; i < 3; i++){
@@ -122,7 +122,7 @@ int main(int argc, char **argv){
         }
 
 	persist("device/raw/pairs.txt");
-*/
+
         ti->scanner = scan_init();
         if(!ti->scanner.is_open()) {                                                             
                 perror("Error open");                                                    

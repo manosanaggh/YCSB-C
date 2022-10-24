@@ -9,6 +9,7 @@ uint32_t g_primary_offset = 0, g_index = 0, g_secondary_offset_b4 = 0, g_seconda
 std::string g_sec_key = "";
 extern std::vector<Tinyblob*> blobs;
 
+//Multithreaded
 int put(void *args){
 	Thread_info *tinfo = (Thread_info*)args;
 	pthread_rwlock_wrlock(&rwlock);
@@ -46,36 +47,16 @@ int put(void *args){
 }
 
 std::vector<Tinyblob*> *get(std::string key){
-        auto tofind = ti->__kv_store.find(key);
-        auto end = ti->__kv_store.end();     
-        if(tofind == end){                   
-                ti->tinfo->result = 0;      
-                return NULL;                 
-        }
+	if(ti->__kv_store[key].empty())
+		return NULL;
 	return &(ti->__kv_store[key]);
 }
 
-/*std::vector<Tinyblob*> *get(void *args){
-	Thread_info *tinfo = (Thread_info*)args;
-	pthread_rwlock_rdlock(&rwlock);
-        auto tofind = ti->__kv_store.find(tinfo->key);
-        auto end = ti->__kv_store.end();     
-        if(tofind == end){                   
-                ti->tinfo->result = 0; 
-		pthread_rwlock_unlock(&rwlock);
-		pthread_barrier_wait(&barrier);
-                return NULL;                 
-        }
-	memcpy(&(tinfo->pv), &(ti->__kv_store[tinfo->key]), sizeof(&(ti->__kv_store[tinfo->key])));
-	pthread_rwlock_unlock(&rwlock);
-	pthread_barrier_wait(&barrier);
-	return &(ti->__kv_store[tinfo->key]);
-}*/
-
+//Multithreaded
 int erase(void *args){
 	Thread_info *tinfo = (Thread_info*)args;
         uint32_t g = 0;
-	pthread_rwlock_wrlock(&rwlock);
+	//pthread_rwlock_wrlock(&rwlock);
         for(auto it = ti->__kv_store.begin(); it != ti->__kv_store.end(); it++){
                 if(it->first == tinfo->key){
                         ti->__kv_store.erase(it);
@@ -85,14 +66,14 @@ int erase(void *args){
         }
         if(g){
 		tinfo->result = 0;
-		pthread_rwlock_unlock(&rwlock);
-		pthread_barrier_wait(&barrier);
+	//	pthread_rwlock_unlock(&rwlock);
+	//	pthread_barrier_wait(&barrier);
                 return 0;
 	}
         else{
 		tinfo->result = -1;
-		pthread_rwlock_unlock(&rwlock);
-		pthread_barrier_wait(&barrier);
+	//	pthread_rwlock_unlock(&rwlock);
+	//	pthread_barrier_wait(&barrier);
                 return -1;
 	}
 }
@@ -110,14 +91,14 @@ std::ifstream scan_init(void){
 
 //Multithreaded
 int get_next(std::ifstream *scanner){
-	pthread_rwlock_wrlock(&rwlock);
+	//pthread_rwlock_wrlock(&rwlock);
 	if(std::getline(*scanner, ti->next_pair)){
-		pthread_rwlock_unlock(&rwlock);
-		pthread_barrier_wait(&barrier);
+	//	pthread_rwlock_unlock(&rwlock);
+	//	pthread_barrier_wait(&barrier);
 		return 0;
 	}
-	pthread_rwlock_unlock(&rwlock);
-	pthread_barrier_wait(&barrier);
+	//pthread_rwlock_unlock(&rwlock);
+	//pthread_barrier_wait(&barrier);
 	return -1;
 }
 
