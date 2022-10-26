@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-std=c++20 -g -Wall -I./
+CFLAGS=-std=c++17 -g -Wall -I./
 LDFLAGS= -pthread -ltbb -lhiredis
 SUBDIRS=core db redis
 SUBSRCS=$(wildcard core/*.cc) $(wildcard db/*.cc) cs647/assignment2/ti.cpp cs647/assignment2/ti_api.cpp cs647/assignment2/tb.cpp cs647/assignment2/tb_api.cpp

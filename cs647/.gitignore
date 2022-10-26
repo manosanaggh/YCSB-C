@@ -1,0 +1,7 @@
+*.out
+*.s
+*.o
+std*
+B*
+assignment1/device/
+assignment2/device/

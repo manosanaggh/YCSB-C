@@ -54,17 +54,18 @@ int CS647DB::Update(const std::string &table, const std::string &key,
              std::vector<KVPair> &values){
         if(ti->__kv_store[key].empty())
                 return -1;
-        pthread_t threads[1024];
+        //pthread_t threads[1024];
 
-        pthread_barrier_destroy(&barrier);
-        pthread_barrier_init(&barrier, NULL, 2);
+        //pthread_barrier_destroy(&barrier);
+        //pthread_barrier_init(&barrier, NULL, 2);
 
         for(int i = 0; i < values.size(); i++){
                 Thread_info *tinfo = new Thread_info();                 
                 tinfo->key = key;                              
                 tinfo->value = values[i].second;                  
-                pthread_create(&threads[i], NULL, (void* (*)(void*))&put, tinfo);
-                pthread_barrier_wait(&barrier);
+                //pthread_create(&threads[i], NULL, (void* (*)(void*))&put, tinfo);
+                //pthread_barrier_wait(&barrier);
+		put(tinfo);
                 if(tinfo->result == -1)
                         std::cout << "[UPDATE] No free blobs!" << std::endl;
         }
@@ -73,19 +74,21 @@ int CS647DB::Update(const std::string &table, const std::string &key,
 
 int CS647DB::Insert(const std::string &table, const std::string &key,
              std::vector<KVPair> &values){
+	std::cout << key << std::endl;
 	if(!ti->__kv_store[key].empty())
 		return -1;
-	pthread_t threads[1024];
+	//pthread_t threads[1024];
 
-        pthread_barrier_destroy(&barrier);
-        pthread_barrier_init(&barrier, NULL, 2);
+        //pthread_barrier_destroy(&barrier);
+        //pthread_barrier_init(&barrier, NULL, 2);
 
 	for(int i = 0; i < values.size(); i++){
                 Thread_info *tinfo = new Thread_info();                 
                 tinfo->key = key;                              
                 tinfo->value = values[i].second;                  
-                pthread_create(&threads[i], NULL, (void* (*)(void*))&put, tinfo);
-                pthread_barrier_wait(&barrier);
+                //pthread_create(&threads[i], NULL, (void* (*)(void*))&put, tinfo);
+                //pthread_barrier_wait(&barrier);
+		put(tinfo);
                 if(tinfo->result == -1)
                         std::cout << "[INSERT] No free blobs!" << std::endl;
 	}

@@ -1,5 +1,5 @@
 CXX=g++
-CXXFLAGS=-g -pthread -std=c++20 -I../../
+CXXFLAGS=-g -pthread -std=c++17 -I../../
 RM=rm -rf
 
 all: clean ti.o

@@ -12,7 +12,7 @@ extern std::vector<Tinyblob*> blobs;
 //Multithreaded
 int put(void *args){
 	Thread_info *tinfo = (Thread_info*)args;
-	pthread_rwlock_wrlock(&rwlock);
+	//pthread_rwlock_wrlock(&rwlock);
 	int i;
 	for(i = 0; i < ti->__kv_store[tinfo->key].size(); i++){
 		Tinyblob *tb = ti->__kv_store[tinfo->key][i];
@@ -35,13 +35,13 @@ int put(void *args){
 	}
 
 	if(i == blobs.size()){
-                pthread_rwlock_unlock(&rwlock);
-                pthread_barrier_wait(&barrier);
+          //      pthread_rwlock_unlock(&rwlock);
+            //    pthread_barrier_wait(&barrier);
 		tinfo->result = -1;
 		return -1;
 	}
-	pthread_rwlock_unlock(&rwlock);
-        pthread_barrier_wait(&barrier);
+	//pthread_rwlock_unlock(&rwlock);
+        //pthread_barrier_wait(&barrier);
 	tinfo->result = 0;
 	return 0;
 }
