@@ -198,6 +198,7 @@ if ((dir = opendir (location)) != NULL) {
 		continue;
 	if(!mode){
         	Tinyblob *tb = new Tinyblob();
+		tb->__free = false;
 		pthread_mutex_lock(&lock);
         	blobs.push_back(tb);      
 		pthread_mutex_unlock(&lock);
@@ -210,6 +211,7 @@ if ((dir = opendir (location)) != NULL) {
 	else{
         	char *tmp_data;    
                 Tinyblob *tb = new Tinyblob();
+		tb->__free = false;
 		pthread_mutex_lock(&lock);
                 blobs.push_back(tb);      
 		pthread_mutex_unlock(&lock);
@@ -228,6 +230,7 @@ if ((dir = opendir (location)) != NULL) {
 		global_dev_offset += blob_size;
 		while(tmp_data[0] == '0' || tmp_data[0] == '1'){
                 	Tinyblob *tb = new Tinyblob();
+			tb->__free = false;
                 	pthread_mutex_lock(&lock);
                 	blobs.push_back(tb);      
                 	pthread_mutex_unlock(&lock);

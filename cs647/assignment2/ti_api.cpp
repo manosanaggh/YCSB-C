@@ -28,6 +28,7 @@ int put(void *args){
 			if(blobs[i]->is_free()){
 				ti->__kv_store[tinfo->key].push_back(blobs[i]);
 				strcpy((char*)blobs[i]->__io_buffer, tinfo->value.c_str());
+				std::cout << "Buffer: " << (char*)blobs[i]->__io_buffer << std::endl;
 				blobs[i]->__free = false;
 				break;
 			}
@@ -35,13 +36,13 @@ int put(void *args){
 	}
 
 	if(i == blobs.size()){
-          //      pthread_rwlock_unlock(&rwlock);
-            //    pthread_barrier_wait(&barrier);
+            //    pthread_rwlock_unlock(&rwlock);
+              //  pthread_barrier_wait(&barrier);
 		tinfo->result = -1;
 		return -1;
 	}
 	//pthread_rwlock_unlock(&rwlock);
-        //pthread_barrier_wait(&barrier);
+       // pthread_barrier_wait(&barrier);
 	tinfo->result = 0;
 	return 0;
 }

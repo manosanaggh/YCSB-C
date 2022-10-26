@@ -5,8 +5,7 @@
 extern Tinyindex *ti;
 extern pthread_rwlock_t rwlock;
 extern pthread_barrier_t barrier;
-extern uint32_t mode, nprocs, blob_size, raw_size, g_primary_offset, g_index, g_secondary_offset_b4, g_secondary_offset_after;
-extern std::string g_sec_key;
+extern uint32_t mode, nprocs, blob_size, raw_size;
 std::vector<std::string> keys;
 std::vector<std::string> values;
 

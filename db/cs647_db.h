@@ -13,11 +13,19 @@
 #include "core/properties.h"
 #include <string>
 #include <vector>
+#include "cs647/assignment2/ti_api.hpp"
+#include "cs647/assignment2/tb_api.hpp"
 
 namespace ycsbc {             
 
 class CS647DB : public DB {
  public:
+  //Initialize the DB to become ready in order to execute queries
+  void Init();
+
+  //Perform necessary operations before closing the DB
+  void Close();
+
   //Read a single record
   int Read(const std::string &table, const std::string &key,
            const std::vector<std::string> *fields,
