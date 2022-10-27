@@ -39,3 +39,7 @@
 
 redis/sample
 ycsbc
+
+device/
+out
+err

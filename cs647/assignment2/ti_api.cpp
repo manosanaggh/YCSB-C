@@ -126,9 +126,9 @@ int close_scanner(std::ifstream *scanner){
 void persist(char *location){
 	std::string pairs_buf = "";
 
-        for(auto x : ti->__kv_store)                                               
-                for(auto y : x.second)        
-			pairs_buf += x.first + "," + std::to_string(y->index()) + "\n";
+        //for(auto x : ti->__kv_store)                                               
+          //      for(auto y : x.second)        
+	//		pairs_buf += x.first + "," + std::to_string(y->index()) + "\n";
 
 	bool created = true;
 
@@ -166,9 +166,9 @@ void persist(char *location){
 	}
 
 	// Debug
-        for(auto x : ti->__kv_store)
-                for(auto y : x.second)                                                            
-                        std::cout << "Key: " << x.first << " | Value of blob " << y->index() << ": " << (char*)y->__io_buffer << std::endl;
+        //for(auto x : ti->__kv_store)
+          //      for(auto y : x.second)                                                            
+            //            std::cout << "Key: " << x.first << " | Value of blob " << y->index() << ": " << (char*)y->__io_buffer << std::endl;
 
 	tb_shutdown();
 }

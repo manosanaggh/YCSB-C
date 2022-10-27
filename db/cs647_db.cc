@@ -47,9 +47,9 @@ void CS647DB::Close() {
 		allocate = 0;
 	}
         
-	for(auto x : ti->__kv_store)
-		for(auto y : x.second)
-			std::cout << "Key: " << x.first << " | Value of blob " << y->index() << ": " << (char*)y->__io_buffer << std::endl;
+	//for(auto x : ti->__kv_store)
+	//	for(auto y : x.second)
+	//		std::cout << "Key: " << x.first << " | Value of blob " << y->index() << ": " << (char*)y->__io_buffer << std::endl;
 	
 	pthread_barrier_destroy(&barrier);
         pthread_rwlock_destroy(&rwlock);
@@ -110,6 +110,8 @@ int CS647DB::Update(const std::string &table, const std::string &key,
 		//put(tinfo);
                 if(tinfo->result == -1)
                         std::cout << "[UPDATE] No free blobs!" << std::endl;
+		else
+			std::cout << "[UPDATE] Successful!" << std::endl;
         }
         return 0;
 }
@@ -129,12 +131,13 @@ int CS647DB::Insert(const std::string &table, const std::string &key,
                 tinfo->value = values[i].second;                  
                 //pthread_create(&threads[i], NULL, (void* (*)(void*))&put, tinfo);
                 //pthread_barrier_wait(&barrier);
-		std::cout << "Value: " << tinfo->value << std::endl;
+		//std::cout << "Value: " << tinfo->value << std::endl;
 		put(tinfo);
-                if(tinfo->result == -1)
+                /*if(tinfo->result == -1)
                         std::cout << "[INSERT] No free blobs!" << std::endl;
 		else
 			std::cout << "[INSERT] Successful!" << std::endl;
+			*/
 	}
 	return 0;
 }       
