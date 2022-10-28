@@ -1,4 +1,5 @@
 mkdir -p device
+mkdir -p device/blobs
 mkdir -p device/raw
 rm -rf err
 rm -rf out

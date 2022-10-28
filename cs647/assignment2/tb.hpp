@@ -37,10 +37,10 @@ class Tinyblob{
 		~Tinyblob();
 
 		void *__io_buffer;	
-		uint32_t rbw;
 		uint32_t created;
 		struct thread_info *ti;
 		bool __free;
+		bool __persisted;
 
 		inline void setIndex(uint32_t index){
         		__index = index;

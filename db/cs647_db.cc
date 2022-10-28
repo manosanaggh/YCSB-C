@@ -20,8 +20,8 @@ void CS647DB::Init() {
 	pthread_t threads[1024];
 
         mode = 1;
-        nprocs = 10;
-        blob_size = 4096;
+        nprocs = 30;
+        blob_size = 8192;
         raw_size = 10;
 
         if (pthread_rwlock_init(&rwlock, NULL) != 0) {
@@ -47,9 +47,9 @@ void CS647DB::Close() {
 		allocate = 0;
 	}
         
-	//for(auto x : ti->__kv_store)
-	//	for(auto y : x.second)
-	//		std::cout << "Key: " << x.first << " | Value of blob " << y->index() << ": " << (char*)y->__io_buffer << std::endl;
+	for(auto x : ti->__kv_store)
+		for(auto y : x.second)
+			std::cout << "Key: " << x.first << " | Value of blob " << y->index() << ": " << (char*)y->__io_buffer << std::endl;
 	
 	pthread_barrier_destroy(&barrier);
         pthread_rwlock_destroy(&rwlock);

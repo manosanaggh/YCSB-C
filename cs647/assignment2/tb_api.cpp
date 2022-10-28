@@ -66,17 +66,17 @@ void tb_free_blob(int index){
 }
 
 int tb_write_blob(int index, void *data){  
+	if(blobs[index]->__persisted)
+		return 0;
 	char *tmp_data;
-	static uint32_t global_dev_offset = 0;
 	if(posix_memalign((void**)&tmp_data, ALIGNMENT, blob_size))
 		std::cout << "posix_memalign failed!" << std::endl;
         if(!mode){
-		if(blobs[index]->rbw){
-			pread(blobs[index]->fd(), tmp_data, blob_size, 0);
-			if(tmp_data[0] != '1')
-				blobs[index]->rbw = 0;
-		}
-                if(blobs[index]->fd() >= 0 && !blobs[index]->rbw){       
+        	if(pread(blobs[index]->fd(), tmp_data, blob_size, 0) == -1)
+                	std::cout << "read failed!" << std::endl;
+		if(tmp_data[0] != '1')
+			blobs[index]->__free = true;
+                if(blobs[index]->fd() >= 0 && blobs[index]->is_free()){       
 			memcpy(tmp_data, "1", 2);
                         int x = pwrite(blobs[index]->fd(), (const void *)(tmp_data), blob_size, 0);
 			memcpy(tmp_data, data, blob_size+1);
@@ -92,21 +92,21 @@ int tb_write_blob(int index, void *data){
 			Tinyblob *tb = new Tinyblob();
 			tb->__open();
 			blobs.push_back(tb);
-			if(!tb->rbw){
-                		int x = fallocate(tb->fd(), 0, 0, blob_size);        
-                		if(x < 0)                                  
-                        		return -1;   
-			} 
-			int x = tb_write_blob(tb->index(), data);
+                	int x = fallocate(tb->fd(), 0, 0, blob_size);        
+                	if(x < 0)                                  
+                        	return -1;   
+			x = tb_write_blob(tb->index(), data);
 			return x;
 		}
         }
+
         if(pread(blobs[index]->fd(), tmp_data, blob_size, blobs[index]->offset()+0) == -1)
 		std::cout << "read failed!" << std::endl;
+	
 	if(tmp_data[0] != '1')
-                blobs[index]->rbw = 0;
-
-        if(blobs[index]->fd() >= 0 && !blobs[index]->rbw){
+                blobs[index]->__free = true;
+	
+        if(blobs[index]->fd() >= 0 && blobs[index]->is_free()){
                 memcpy(tmp_data, "1", 2);
                 int x = pwrite(blobs[index]->fd(), (const void *)(tmp_data), blob_size, blobs[index]->offset()+0);
                 memcpy(tmp_data, data, blob_size+1);     
@@ -121,8 +121,7 @@ int tb_write_blob(int index, void *data){
         else{    
         	Tinyblob *tb = new Tinyblob();
                 tb->__open("device/raw/file.txt");      
-                tb->setOffset(global_dev_offset);
-                global_dev_offset += blob_size;
+                tb->setOffset((blobs.size() * blob_size) + blob_size);
                 blobs.push_back(tb);      
                 int x = tb_write_blob(tb->index(), data);
                 return x;
@@ -150,7 +149,7 @@ int tb_read_blob(void *args){
 			return x;
 		}
         if(blobs[ti->i]->fd() >= 0){
-                int x = pread(blobs[ti->i]->fd(), tmp_data, blob_size, ALIGNMENT);
+                int x = pread(blobs[ti->i]->fd(), tmp_data, blob_size, blobs[ti->i]->offset()+ALIGNMENT);
                 pthread_mutex_lock(&lock);
                 memcpy(*((char**)ti->buffer), tmp_data, blob_size+1);
                 pthread_mutex_unlock(&lock);
@@ -180,9 +179,9 @@ void tb_flush(){
 
 void tb_shutdown(){
 	//In as2 also writes everything to device
-        for(int i = 0; i < nprocs; i++){
+        for(auto tb : blobs){
                 int x;              
-                if((x = tb_write_blob(i, blobs[i]->__io_buffer)) == -1)
+                if((x = tb_write_blob(tb->index(), tb->__io_buffer)) == -1)
                         std::cout << "[SHUTDOWN] *ERROR* : tb_write_blob failed!" << std::endl;
         }
 
@@ -194,60 +193,60 @@ DIR *dir;
 struct dirent *ent;
 if ((dir = opendir (location)) != NULL) {
   while ((ent = readdir (dir)) != NULL) {
-	if(strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)
+	if(strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0){
 		continue;
-	if(!mode){
-        	Tinyblob *tb = new Tinyblob();
-		tb->__free = false;
-		pthread_mutex_lock(&lock);
-        	blobs.push_back(tb);      
-		pthread_mutex_unlock(&lock);
-		char final_location[30] = "";
-		strcat(final_location, location);
-		strcat(final_location, ent->d_name);
-		tb->__open(final_location);
-        	tb->setOffset(0);
 	}
-	else{
-        	char *tmp_data;    
-                Tinyblob *tb = new Tinyblob();
-		tb->__free = false;
-		pthread_mutex_lock(&lock);
-                blobs.push_back(tb);      
-		pthread_mutex_unlock(&lock);
+	if(!mode){
+                char *tmp_data;
+                if(posix_memalign((void**)&tmp_data, ALIGNMENT, blob_size))                       
+                        std::cout << "posix_memalign failed!" << std::endl; 
                 char final_location[30] = "";
                 strcat(final_location, location);
                 strcat(final_location, ent->d_name);
-                tb->__open(final_location);
-		tb->setOffset(global_dev_offset);
-        	if(posix_memalign((void**)&tmp_data, ALIGNMENT, blob_size))                       
-                	std::cout << "posix_memalign failed!" << std::endl;  
-                if(pread(tb->fd(), tmp_data, blob_size, global_dev_offset+0) == -1)
-                        std::cout << "read failed!" << std::endl;
-		//Added in as2
-                if(pread(tb->fd(), tb->__io_buffer, blob_size, global_dev_offset+ALIGNMENT) == -1)
-                        std::cout << "read failed!" << std::endl;
-		global_dev_offset += blob_size;
+                int fd;
+                if((fd = open(final_location, O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR)) == -1)
+                        std::cout << "[TB_INIT] Error with open" << std::endl;
+                if(pread(fd, tmp_data, blob_size, 0) == -1)
+                        std::cout << "[TB_INIT] read failed!" << std::endl;
+                Tinyblob *tb = new Tinyblob();
+                if(tmp_data[0] == '0')
+                        tb->__free = true;
+                else
+                        tb->__free = false;
+                blobs.push_back(tb);
+                tb->__open();
+		tb->__persisted = true;
+                if(pread(tb->fd(), tb->__io_buffer, blob_size, tb->offset()+ALIGNMENT) == -1)
+                        std::cout << "[TB_INIT] read failed!" << std::endl;
+	}
+	else{
+		char *tmp_data;
+                if(posix_memalign((void**)&tmp_data, ALIGNMENT, blob_size))                       
+                        std::cout << "posix_memalign failed!" << std::endl; 
+                char final_location[30] = "";
+                strcat(final_location, location);
+                strcat(final_location, ent->d_name);
+		int fd;
+		if((fd = open(final_location, O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR)) == -1)
+			std::cout << "[TB_INIT] Error with open" << std::endl;
+                if(pread(fd, tmp_data, blob_size, global_dev_offset+0) == -1)
+                        std::cout << "[TB_INIT] read failed!" << std::endl;
 		while(tmp_data[0] == '0' || tmp_data[0] == '1'){
-                	Tinyblob *tb = new Tinyblob();
-			tb->__free = false;
-                	pthread_mutex_lock(&lock);
-                	blobs.push_back(tb);      
-                	pthread_mutex_unlock(&lock);
-			char final_location2[30] = "";
-                	strcat(final_location2, location);
-                	strcat(final_location2, ent->d_name);
-                	tb->__open(final_location2);
+			Tinyblob *tb = new Tinyblob();
+			if(tmp_data[0] == '0')
+				tb->__free = true;
+			else
+				tb->__free = false;
+			blobs.push_back(tb);
+			tb->__open(final_location);
 			tb->setOffset(global_dev_offset);
+			tb->__persisted = true;
+                        if(pread(tb->fd(), tb->__io_buffer, blob_size, tb->offset()+ALIGNMENT) == -1)
+                                std::cout << "[TB_INIT] read failed!" << std::endl;
 			global_dev_offset += blob_size;
-                	if(pread(tb->fd(), tmp_data, blob_size, global_dev_offset+0) == -1)
-                        	std::cout << "read failed!" << std::endl;
-			//Added in as2
-                	if(pread(tb->fd(), tb->__io_buffer, blob_size, global_dev_offset+ALIGNMENT) == -1)
-                        	std::cout << "read failed!" << std::endl;
+                        if(pread(tb->fd(), tmp_data, blob_size, global_dev_offset+0) == -1)
+                                std::cout << "read failed!" << std::endl;
 		}
-        	if(tmp_data[0] != '1')                    
-                	tb->rbw = 0;    	
 	}
   }
   closedir (dir);

@@ -4,8 +4,7 @@
 Tinyindex *ti = NULL;
 pthread_rwlock_t rwlock;
 extern pthread_barrier_t barrier;
-extern uint32_t nprocs, blob_size;
-uint32_t g_primary_offset = 0, g_index = 0, g_secondary_offset_b4 = 0, g_secondary_offset_after = 0;
+extern uint32_t nprocs, blob_size, mode;
 std::string g_sec_key = "";
 extern std::vector<Tinyblob*> blobs;
 
@@ -28,7 +27,6 @@ int put(void *args){
 			if(blobs[i]->is_free()){
 				ti->__kv_store[tinfo->key].push_back(blobs[i]);
 				strcpy((char*)blobs[i]->__io_buffer, tinfo->value.c_str());
-				std::cout << "Buffer: " << (char*)blobs[i]->__io_buffer << std::endl;
 				blobs[i]->__free = false;
 				break;
 			}
@@ -126,9 +124,9 @@ int close_scanner(std::ifstream *scanner){
 void persist(char *location){
 	std::string pairs_buf = "";
 
-        //for(auto x : ti->__kv_store)                                               
-          //      for(auto y : x.second)        
-	//		pairs_buf += x.first + "," + std::to_string(y->index()) + "\n";
+        for(auto x : ti->__kv_store)                                               
+                for(auto y : x.second)        
+			pairs_buf += x.first + "," + std::to_string(y->index()) + "\n";
 
 	bool created = true;
 
@@ -166,15 +164,16 @@ void persist(char *location){
 	}
 
 	// Debug
-        //for(auto x : ti->__kv_store)
-          //      for(auto y : x.second)                                                            
-            //            std::cout << "Key: " << x.first << " | Value of blob " << y->index() << ": " << (char*)y->__io_buffer << std::endl;
+        for(auto x : ti->__kv_store)
+                for(auto y : x.second)                                                            
+                        std::cout << "[PERSIST] Key: " << x.first << " | Value of blob " << y->index() << ": " << (char*)y->__io_buffer << std::endl;
 
 	tb_shutdown();
 }
 
 void recover(char *location){
-	tb_init("device/raw/");
+	if(mode) tb_init("device/raw/");
+	else tb_init("device/blobs/");
 
         int fd = open(location, O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
 
@@ -197,7 +196,7 @@ void recover(char *location){
         }
 
 	//Debug
-	std::cout << tmp_data << std::endl;
+	std::cout << "[RECOVER] " << tmp_data << std::endl;
 
 	std::string input(tmp_data);
     std::vector<std::string> result;
@@ -213,7 +212,7 @@ void recover(char *location){
     }
 
     	//Debug
-        for(Tinyblob *tb : blobs){                       
+    	std::cout << "[RECOVER]" << std::endl;
+        for(Tinyblob *tb : blobs)                       
                 tb->printTb();
-        }
 }
