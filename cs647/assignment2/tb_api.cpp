@@ -191,7 +191,7 @@ DIR *dir;
 struct dirent *ent;
 if ((dir = opendir (location)) != NULL) {
   while ((ent = readdir (dir)) != NULL) {
-	if(strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0){
+	if(strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0 || strcmp(ent->d_name, "pairs.txt") == 0){
 		continue;
 	}
 	if(!mode){
