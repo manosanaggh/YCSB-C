@@ -1,7 +1,7 @@
 #include "tb.hpp"
 
 uint32_t Tinyblob::__cnt_blob = 0;
-extern uint32_t blob_size, mode;
+extern uint32_t blob_size;
 
 Tinyblob::Tinyblob(){
 	posix_memalign(&__io_buffer, ALIGNMENT, blob_size);

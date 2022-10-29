@@ -1,6 +1,6 @@
 #include "tb_api.hpp"
 
-uint32_t mode, nprocs, blob_size, io_size, raw_size, global_dev_offset = 0;
+uint32_t mode, nprocs, blob_size, raw_size, global_dev_offset = 0;
 
 std::vector<Tinyblob*> blobs;
 pthread_mutex_t lock;
@@ -27,10 +27,13 @@ int tb_allocate_blob(){
 		return tb->index();
 	}
 	pthread_mutex_lock(&lock);
-	tb->__open("device/raw/file.txt");
+	tb->__open((char*)"device/raw/file.txt");
 	int x;
         if (access("device/raw/file.txt", F_OK) == 0 && tb->created){      
-        	x = fallocate(tb->fd(), 0, 0, raw_size * 1024 * 1024);     
+        	if((x = fallocate(tb->fd(), 0, 0, raw_size * 1024 * 1024)) == -1){
+			std::cout << "[TB_ALLOCATE_BLOB] Problem with falllocate!" << std::endl;
+			return -1;
+		}
 	}
 	if(tb->fd() < 0){
 		blobs[tb->index()]->ti->result = -1;
@@ -46,22 +49,24 @@ int tb_allocate_blob(){
 
 void tb_free_blob(int index){
 	char *tmp_data;
+	int x;
         if(posix_memalign((void**)&tmp_data, ALIGNMENT, blob_size))
                 std::cout << "posix_memalign failed!" << std::endl;
 	if(!mode){
 		if(blobs[index]->fd() >= 0)
-			if(index >= 0 && index <= Tinyblob::cnt_blob()){ 
+			if(index >= 0 && index <= (int)Tinyblob::cnt_blob()){ 
 				pthread_mutex_lock(&lock);
                         	memcpy(tmp_data, "0", 2);
 				pthread_mutex_unlock(&lock);
-                        	int x = pwrite(blobs[index]->fd(), (const void *)(tmp_data), blob_size, 0);
+                        	if((x = pwrite(blobs[index]->fd(), (const void *)(tmp_data), blob_size, 0)) == 0)
+                                	std::cout << "[TB_WRITE_BLOB] Writen 0 bytes" << std::endl;
 				fallocate(blobs[index]->fd(), FALLOC_FL_PUNCH_HOLE, 0, blob_size);
 				blobs[index]->__free = true;
 				blobs[index]->__close();
 			}
 	}
         if(blobs[index]->fd() >= 0)                                                       
-                if(index >= 0 && index <= Tinyblob::cnt_blob())                      
+                if(index >= 0 && index <= (int)Tinyblob::cnt_blob())                      
                         blobs[index]->__close();
 }
 
@@ -69,6 +74,7 @@ int tb_write_blob(int index, void *data){
 	if(blobs[index]->__persisted)
 		return 0;
 	char *tmp_data;
+	int x;
 	if(posix_memalign((void**)&tmp_data, ALIGNMENT, blob_size))
 		std::cout << "posix_memalign failed!" << std::endl;
         if(!mode){
@@ -78,9 +84,11 @@ int tb_write_blob(int index, void *data){
 			blobs[index]->__free = true;
                 if(blobs[index]->fd() >= 0 && blobs[index]->is_free()){       
 			memcpy(tmp_data, "1", 2);
-                        int x = pwrite(blobs[index]->fd(), (const void *)(tmp_data), blob_size, 0);
+			if((x = pwrite(blobs[index]->fd(), (const void *)(tmp_data), blob_size, 0)) == 0)
+				std::cout << "[TB_WRITE_BLOB] Writen 0 bytes" << std::endl;
 			memcpy(tmp_data, data, blob_size+1);
-			x = pwrite(blobs[index]->fd(), (const void *)(tmp_data), blob_size, ALIGNMENT);
+                        if((x = pwrite(blobs[index]->fd(), (const void *)(tmp_data), blob_size, ALIGNMENT)) == 0) 
+                                std::cout << "[TB_WRITE_BLOB] Writen 0 bytes" << std::endl;  
                         free(blobs[index]->__io_buffer);                              
                         if(posix_memalign(&(blobs[index]->__io_buffer), ALIGNMENT, blob_size))
 				std::cout << "posix_memalign failed!" << std::endl;
@@ -92,10 +100,10 @@ int tb_write_blob(int index, void *data){
 			Tinyblob *tb = new Tinyblob();
 			tb->__open();
 			blobs.push_back(tb);
-                	int x = fallocate(tb->fd(), 0, 0, blob_size);        
-                	if(x < 0)                                  
+                	if((x = fallocate(tb->fd(), 0, 0, blob_size)) < 0)                                  
                         	return -1;   
-			x = tb_write_blob(tb->index(), data);
+			if((x = tb_write_blob(tb->index(), data)) == 0)
+				std::cout << "[TB_WRITE_BLOB] Writen 0 bytes" << std::endl;	
 			return x;
 		}
         }
@@ -108,9 +116,11 @@ int tb_write_blob(int index, void *data){
 	
         if(blobs[index]->fd() >= 0 && blobs[index]->is_free()){
                 memcpy(tmp_data, "1", 2);
-                int x = pwrite(blobs[index]->fd(), (const void *)(tmp_data), blob_size, blobs[index]->offset()+0);
+                if((x = pwrite(blobs[index]->fd(), (const void *)(tmp_data), blob_size, blobs[index]->offset()+0)) == 0)     
+                        std::cout << "[TB_WRITE_BLOB] Writen 0 bytes" << std::endl;
                 memcpy(tmp_data, data, blob_size+1);     
-		x = pwrite(blobs[index]->fd(), (const void *)(tmp_data), blob_size, blobs[index]->offset()+ALIGNMENT);
+                if((x = pwrite(blobs[index]->fd(), (const void *)(tmp_data), blob_size, blobs[index]->offset()+ALIGNMENT)) == 0)
+                        std::cout << "[TB_WRITE_BLOB] Writen 0 bytes" << std::endl; 
                 free(blobs[index]->__io_buffer);
                 if(posix_memalign(&(blobs[index]->__io_buffer), ALIGNMENT, blob_size))
                 	std::cout << "posix_memalign failed!" << std::endl;
@@ -120,10 +130,11 @@ int tb_write_blob(int index, void *data){
         } 
         else{    
         	Tinyblob *tb = new Tinyblob();
-                tb->__open("device/raw/file.txt");      
+                tb->__open((char*)"device/raw/file.txt");      
                 tb->setOffset((blobs.size() * blob_size) + blob_size);
                 blobs.push_back(tb);      
-                int x = tb_write_blob(tb->index(), data);
+                if((x = tb_write_blob(tb->index(), data)) == 0)                         
+                        std::cout << "[TB_WRITE_BLOB] Writen 0 bytes" << std::endl;
                 return x;
         }
         return -1;                        
@@ -165,14 +176,15 @@ int tb_read_blob(void *args){
 }
 
 void tb_flush(){
-	int i;
+	uint32_t i;
 	for(i = 0; i < Tinyblob::cnt_blob(); i++){
 		int fd = blobs[i]->fd();
-		if(fd >= 0)
+		if(fd >= 0){
 			if(fsync(fd) == 0) 
 				return;
 			else 
 				exit(EXIT_FAILURE);
+		}
 	}
 }
 
@@ -182,7 +194,6 @@ void tb_shutdown(){
                 if((x = tb_write_blob(tb->index(), tb->__io_buffer)) == -1)
                         std::cout << "[SHUTDOWN] *ERROR* : tb_write_blob failed!" << std::endl;
         }
-
 	tb_flush();
 }
 

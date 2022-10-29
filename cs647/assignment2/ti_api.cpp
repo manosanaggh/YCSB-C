@@ -4,8 +4,7 @@
 Tinyindex *ti = NULL;
 pthread_rwlock_t rwlock;
 extern pthread_barrier_t barrier;
-extern uint32_t nprocs, blob_size, mode;
-std::string g_sec_key = "";
+extern uint32_t blob_size, mode;
 extern std::vector<Tinyblob*> blobs;
 
 //Multithreaded
@@ -13,7 +12,7 @@ int put(void *args){
 	Thread_info *tinfo = (Thread_info*)args;
 	//pthread_rwlock_wrlock(&rwlock);
 	int i;
-	for(i = 0; i < ti->__kv_store[tinfo->key].size(); i++){
+	for(i = 0; i < (int)ti->__kv_store[tinfo->key].size(); i++){
 		Tinyblob *tb = ti->__kv_store[tinfo->key][i];
 		if(tb->is_free()){
 			strcpy((char*)tb->__io_buffer, tinfo->value.c_str());
@@ -22,8 +21,8 @@ int put(void *args){
 		}
 	}
 
-	if(ti->__kv_store[tinfo->key].size() == 0 || i == ti->__kv_store[tinfo->key].size()){
-		for(i = 0; i < blobs.size(); i++){
+	if(ti->__kv_store[tinfo->key].size() == 0 || i == (int)ti->__kv_store[tinfo->key].size()){
+		for(i = 0; i < (int)blobs.size(); i++){
 			if(blobs[i]->is_free()){
 				ti->__kv_store[tinfo->key].push_back(blobs[i]);
 				strcpy((char*)blobs[i]->__io_buffer, tinfo->value.c_str());
@@ -33,7 +32,7 @@ int put(void *args){
 		}
 	}
 
-	if(i == blobs.size()){
+	if(i == (int)blobs.size()){
             //    pthread_rwlock_unlock(&rwlock);
               //  pthread_barrier_wait(&barrier);
 		tinfo->result = -1;
@@ -128,11 +127,6 @@ void persist(char *location){
                 for(auto y : x.second)        
 			pairs_buf += x.first + "," + std::to_string(y->index()) + "\n";
 
-	bool created = true;
-
-	if (access(location, F_OK) != 0)
-		created = false;
-
 	int fd = open(location, O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
 	int x;
 
@@ -141,24 +135,23 @@ void persist(char *location){
 		return;
 	}
 
-	if(!created)
-		x = fallocate(fd, 0, 0, 1 * 1024 * 1024);
-
-        if(x == -1){
+	if(!ti->allocated && (x = fallocate(fd, 0, 0, 10 * 1024 * 1024)) == -1){
                 std::cout << "[PERSIST] *ERROR* : Allocating file unsuccessful!" << std::endl;
                 return;
-        }
-    	
+	}	
+	else
+		ti->allocated = true;
+
 	char *tmp_data;
 
-        if(posix_memalign((void**)&tmp_data, ALIGNMENT, blob_size)){ 
+        if(posix_memalign((void**)&tmp_data, ALIGNMENT, 10 * 1024 * 1024)){ 
                 std::cout << "[PERSIST] *ERROR*: posix_memalign failed!" << std::endl;
 		return;
 	}
 	
 	strcpy(tmp_data, pairs_buf.c_str());
 
-	if((x = pwrite(fd, (const void *)(tmp_data), blob_size, 0)) == -1){
+	if((x = pwrite(fd, (const void *)(tmp_data), 10 * 1024 * 1024, 0)) == -1){
 		std::cout << "[PERSIST] *ERROR* : Writing file unsuccessful!" << std::endl;
 		return;
 	}
@@ -172,8 +165,8 @@ void persist(char *location){
 }
 
 void recover(char *location){
-	if(mode) tb_init("device/raw/");
-	else tb_init("device/blobs/");
+	if(mode) tb_init((char*)"device/raw/");
+	else tb_init((char*)"device/blobs/");
 
         int fd = open(location, O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
 
@@ -185,12 +178,12 @@ void recover(char *location){
         char *tmp_data;
 	int x;
 
-        if(posix_memalign((void**)&tmp_data, ALIGNMENT, blob_size)){ 
+        if(posix_memalign((void**)&tmp_data, ALIGNMENT, 10 * 1024 * 1024)){ 
                 std::cout << "[RECOVER] *ERROR*: posix_memalign failed!" << std::endl;
                 return;
         }
         
-        if((x = pread(fd, (void *)(tmp_data), blob_size, 0)) == -1){
+        if((x = pread(fd, (void *)(tmp_data), 10 * 1024 * 1024, 0)) == -1){
                 std::cout << "[RECOVER] *ERROR* : Reading file unsuccessful!" << std::endl;
                 return;
         }
@@ -202,7 +195,7 @@ void recover(char *location){
     std::vector<std::string> result;
     boost::split(result, input, boost::is_any_of("\n"));
  
-    for (int i = 0; i < result.size()-1; i++){
+    for (int i = 0; i < (int)(result.size()-1); i++){
         std::string input2(result[i]);                                                                                          
     	std::vector<std::string> result2;         
     	boost::split(result2, input2, boost::is_any_of(","));

@@ -28,6 +28,7 @@ class Tinyindex{
 		std::unordered_map<std::string, std::vector<Tinyblob*>> __kv_store;
 		std::string next_pair;
 		std::ifstream scanner;
+		bool allocated;
 		Thread_info *tinfo;
 };
 

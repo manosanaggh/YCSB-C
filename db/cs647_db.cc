@@ -19,8 +19,8 @@ namespace ycsbc {
 void CS647DB::Init() {
 	pthread_t threads[1024];
 
-        mode = 0;
-        nprocs = 10;
+        mode = 1;
+        nprocs = 30;
         blob_size = 4096;
         raw_size = 10;
 
@@ -33,10 +33,10 @@ void CS647DB::Init() {
 	if(!ti){
 		ti = new Tinyindex();
 		if(mode)
-			recover("device/raw/pairs.txt");
+			recover((char*)"device/raw/pairs.txt");
 		else
-			recover("device/blobs/pairs.txt");
-        	for(int i = 0; i < nprocs; i++)      
+			recover((char*)"device/blobs/pairs.txt");
+        	for(uint32_t i = 0; i < nprocs; i++)      
                 	pthread_create(&threads[i], NULL, (void* (*)(void*))&tb_allocate_blob, NULL);
         	pthread_barrier_wait(&barrier);
 		allocate = 1;
@@ -47,18 +47,19 @@ void CS647DB::Close() {
 	std::cout << "CS647DB::Close" << std::endl;
 	if(allocate){
                 if(mode)
-                        persist("device/raw/pairs.txt");
+                        persist((char*)"device/raw/pairs.txt");
                 else
-                        persist("device/blobs/pairs.txt");
+                        persist((char*)"device/blobs/pairs.txt");
 		allocate = 0;
 	}
         
 	for(auto x : ti->__kv_store)
 		for(auto y : x.second)
-			std::cout << "Key: " << x.first << " | Value of blob " << y->index() << ": " << (char*)y->__io_buffer << std::endl;
-	
+			if(y)
+				std::cout << "Key: " << x.first << " | Value of blob " << y->index() << ": " << (char*)y->__io_buffer << std::endl;
 	pthread_barrier_destroy(&barrier);
         pthread_rwlock_destroy(&rwlock);
+	std::cout << "Closing db" << std::endl;
 }
 
 
@@ -107,7 +108,7 @@ int CS647DB::Update(const std::string &table, const std::string &key,
         pthread_barrier_destroy(&barrier);
         pthread_barrier_init(&barrier, NULL, 2);
 
-        for(int i = 0; i < values.size(); i++){
+        for(int i = 0; i < (int)values.size(); i++){
                 Thread_info *tinfo = new Thread_info();                 
                 tinfo->key = key;                              
                 tinfo->value = values[i].second;                  
@@ -131,7 +132,7 @@ int CS647DB::Insert(const std::string &table, const std::string &key,
         pthread_barrier_destroy(&barrier);
         pthread_barrier_init(&barrier, NULL, 2);
 
-	for(int i = 0; i < values.size(); i++){
+	for(int i = 0; i < (int)values.size(); i++){
                 Thread_info *tinfo = new Thread_info();                 
                 tinfo->key = key;                              
                 tinfo->value = values[i].second;                  
