@@ -165,7 +165,6 @@ int tb_read_blob(void *args){
 }
 
 void tb_flush(){
-	//In as2 runs for both modes
 	int i;
 	for(i = 0; i < Tinyblob::cnt_blob(); i++){
 		int fd = blobs[i]->fd();
@@ -178,7 +177,6 @@ void tb_flush(){
 }
 
 void tb_shutdown(){
-	//In as2 also writes everything to device
         for(auto tb : blobs){
                 int x;              
                 if((x = tb_write_blob(tb->index(), tb->__io_buffer)) == -1)

@@ -20,8 +20,8 @@ void CS647DB::Init() {
 	pthread_t threads[1024];
 
         mode = 1;
-        nprocs = 30;
-        blob_size = 8192;
+        nprocs = 10;
+        blob_size = 4096;
         raw_size = 10;
 
         if (pthread_rwlock_init(&rwlock, NULL) != 0) {
@@ -33,8 +33,8 @@ void CS647DB::Init() {
 	if(!ti){
 		ti = new Tinyindex();
 		recover("device/raw/pairs.txt");
-        	for(int i = 0; i < nprocs; i++) //uncomment to run with allocate      
-                	pthread_create(&threads[i], NULL, (void* (*)(void*))&tb_allocate_blob, NULL); //uncomment to run with allocate
+        	for(int i = 0; i < nprocs; i++)      
+                	pthread_create(&threads[i], NULL, (void* (*)(void*))&tb_allocate_blob, NULL);
         	pthread_barrier_wait(&barrier);
 		allocate = 1;
 	}
