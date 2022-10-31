@@ -80,7 +80,7 @@ std::ifstream scan_init(void){
 	std::ifstream scanner;
         scanner.open("device/raw/pairs.txt");
         if(!scanner.is_open()) { 
-                perror("Error open");                                                        
+		std::cout << "[SCAN_INIT] Error scanner not open!" << std::endl;                                                        
                 exit(EXIT_FAILURE);
         }	
 	std::getline(scanner, ti->next_pair);
@@ -124,9 +124,11 @@ void persist(char *location){
 	std::string pairs_buf = "";
 
         for(auto x : ti->__kv_store)                                               
-                for(auto y : x.second)        
-			pairs_buf += x.first + "," + std::to_string(y->index()) + "\n";
-
+                for(auto y : x.second)
+			if(y)
+				pairs_buf += x.first + "," + std::to_string(y->index()) + "\n";
+	
+	std::cout << location << std::endl;
 	int fd = open(location, O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
 	int x;
 
@@ -157,9 +159,9 @@ void persist(char *location){
 	}
 
 	// Debug
-        for(auto x : ti->__kv_store)
+        /*for(auto x : ti->__kv_store)
                 for(auto y : x.second)                                                            
-                        std::cout << "[PERSIST] Key: " << x.first << " | Value of blob " << y->index() << ": " << (char*)y->__io_buffer << std::endl;
+                        std::cout << "[PERSIST] Key: " << x.first << " | Value of blob " << y->index() << ": " << (char*)y->__io_buffer << std::endl;*/
 
 	tb_shutdown();
 }
@@ -189,7 +191,7 @@ void recover(char *location){
         }
 
 	//Debug
-	std::cout << "[RECOVER] " << tmp_data << std::endl;
+	//std::cout << "[RECOVER] " << tmp_data << std::endl;
 
 	std::string input(tmp_data);
     std::vector<std::string> result;
@@ -205,7 +207,7 @@ void recover(char *location){
     }
 
     	//Debug
-    	std::cout << "[RECOVER]" << std::endl;
+    	/*std::cout << "[RECOVER]" << std::endl;
         for(Tinyblob *tb : blobs)                       
-                tb->printTb();
+                tb->printTb();*/
 }

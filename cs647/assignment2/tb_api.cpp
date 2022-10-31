@@ -8,9 +8,9 @@ pthread_barrier_t barrier;
 
 int tb_allocate_blob(){
         Tinyblob *tb = new Tinyblob();
-        pthread_mutex_lock(&lock); 
+        //pthread_mutex_lock(&lock); 
         blobs.push_back(tb);                  
-        pthread_mutex_unlock(&lock); 
+        //pthread_mutex_unlock(&lock); 
 	if(!mode){
 		tb->__open();
 		if(tb->fd() < 0){
@@ -22,11 +22,11 @@ int tb_allocate_blob(){
                         blobs[tb->index()]->ti->result = -1;         
                         return -1;
 		}
-		pthread_barrier_wait(&barrier);
+	//	pthread_barrier_wait(&barrier);
 		blobs[tb->index()]->ti->result = tb->index();
 		return tb->index();
 	}
-	pthread_mutex_lock(&lock);
+	//pthread_mutex_lock(&lock);
 	tb->__open((char*)"device/raw/file.txt");
 	int x;
         if (access("device/raw/file.txt", F_OK) == 0 && tb->created){      
@@ -41,8 +41,8 @@ int tb_allocate_blob(){
 	}
         tb->setOffset(global_dev_offset);
         global_dev_offset += blob_size;
-	pthread_mutex_unlock(&lock);
-	pthread_barrier_wait(&barrier);
+	//pthread_mutex_unlock(&lock);
+	//pthread_barrier_wait(&barrier);
 	blobs[tb->index()]->ti->result = tb->index();
 	return tb->index();
 }
@@ -212,6 +212,7 @@ if ((dir = opendir (location)) != NULL) {
                 char final_location[30] = "";
                 strcat(final_location, location);
                 strcat(final_location, ent->d_name);
+		std::cout << final_location << std::endl;
                 int fd;
                 if((fd = open(final_location, O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR)) == -1)
                         std::cout << "[TB_INIT] Error with open" << std::endl;
