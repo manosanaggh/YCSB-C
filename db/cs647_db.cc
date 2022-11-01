@@ -20,7 +20,7 @@ void CS647DB::Init() {
 	//pthread_t threads[1024];
 
         mode = 1;
-        nprocs = 1000;
+        nprocs = 10;
         blob_size = 4096;
         raw_size = 10;
 
@@ -82,10 +82,11 @@ int CS647DB::Read(const std::string &table, const std::string &key,
 int CS647DB::Scan(const std::string &table, const std::string &key,
            int len, const std::vector<std::string> *fields,
            std::vector<std::vector<KVPair>> &result){
-	if(ti->__kv_store[key].empty())
-		return -1;
+	//if(ti->__kv_store[key].empty())
+	//	return 0;
 
 	std::vector<KVPair> result2;
+	static uint32_t x = 0;
 	ti->scanner = scan_init();
         if(!ti->scanner.is_open()) {                                                             
 		std::cout << "[SCAN] Error scanner not open!" << std::endl;      
@@ -93,12 +94,13 @@ int CS647DB::Scan(const std::string &table, const std::string &key,
         }  
 
 	std::cout << "[SCAN] going on..." << std::endl;
+	std::cout << x++ << std::endl;
 	for(int i = 0; i < len; i++){
 		for(auto x : *(get_scan_value(ti->next_pair)))
 			result2.push_back(std::make_pair(get_scan_key(ti->next_pair), std::string((char*)x->__io_buffer)));
 		result.push_back(result2);
 		if(get_next(&ti->scanner) == -1)
-			return -1;
+			return 0;
 	}
 	return close_scanner(&ti->scanner);
 }

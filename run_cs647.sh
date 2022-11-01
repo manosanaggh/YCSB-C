@@ -4,4 +4,4 @@ mkdir -p device/raw
 rm -rf err
 rm -rf out
 make
-./ycsbc -db cs647 -threads 1 -P workloads/workloadf.spec $1 > err 2>&1 > out
+./ycsbc -db cs647 -threads 1 -P workloads/workloade.spec $1 > err 2>&1 > out
