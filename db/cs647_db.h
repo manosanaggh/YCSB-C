@@ -13,8 +13,9 @@
 #include "core/properties.h"
 #include <string>
 #include <vector>
-#include "cs647/assignment2/ti_api.hpp"
-#include "cs647/assignment2/tb_api.hpp"
+#include "cs647/assignment3/ti_api.hpp"
+#include "cs647/assignment3/tb_api.hpp"
+#include "cs647/assignment3/tl_api.hpp"
 
 namespace ycsbc {             
 
