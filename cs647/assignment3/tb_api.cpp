@@ -190,9 +190,9 @@ void tb_flush(){
 
 void tb_shutdown(){
         for(auto tb : blobs){
-                int x;              
+                int x;
                 if((x = tb_write_blob(tb->index(), tb->__io_buffer)) == -1)
-                        std::cout << "[SHUTDOWN] *ERROR* : tb_write_blob failed!" << std::endl;
+                	std::cout << "[SHUTDOWN] *ERROR* : tb_write_blob failed!" << std::endl;
         }
 	tb_flush();
 }

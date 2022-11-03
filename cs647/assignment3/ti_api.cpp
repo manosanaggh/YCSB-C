@@ -42,8 +42,19 @@ int put(void *args){
 	}
 	//pthread_rwlock_unlock(&rwlock);
         // pthread_barrier_wait(&barrier);
+	if(tl->wal_buf.size() < 19)
+		tl->wal_buf.push_back(std::make_pair(tinfo->key, tinfo->value));
+	else{
+		tl->wal_buf.push_back(std::make_pair(tinfo->key, tinfo->value));
+		for(auto x : tl->wal_buf){
+			append(x.first, x.second);
+		}
+		tl->wal_buf.clear();
+		//tb_shutdown();
+	}
 
-	append(tinfo->key, tinfo->value);
+	//append(tinfo->key, tinfo->value);
+	//std::cout << tinfo->key << "," << tinfo->value << std::endl;
 
 	/*if(mode)
 		persist((char*)"device/raw/pairs.txt");

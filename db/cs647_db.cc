@@ -21,7 +21,7 @@ void CS647DB::Init() {
 	//pthread_t threads[1024];
 
         mode = 1;
-        nprocs = 10;
+        nprocs = 100;
         blob_size = 4096;
         raw_size = 10;
 
