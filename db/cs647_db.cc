@@ -13,6 +13,7 @@ extern Tinyindex *ti;
 extern uint32_t mode, nprocs, blob_size, raw_size; 
 extern pthread_rwlock_t rwlock;
 uint32_t allocate = 0;
+extern Tinylog *tl;
 
 namespace ycsbc {
 
@@ -32,11 +33,34 @@ void CS647DB::Init() {
 
 	if(!ti){
 		ti = new Tinyindex();
+		tl = new Tinylog();
+		
+		if(mode){
+        		if((tl->fd = open("device/raw/wal.log", O_RDWR|O_CREAT|O_DIRECT|O_SYNC, S_IRUSR|S_IWUSR)) == -1){
+                		std::cout << "[Init] Error with opening WAL" << std::endl;
+				return;
+			}
+		}
+		else{
+                        if((tl->fd = open("device/blobs/wal.log", O_RDWR|O_CREAT|O_DIRECT|O_SYNC, S_IRUSR|S_IWUSR)) == -1){
+                                std::cout << "[Init] Error with opening WAL" << std::endl;
+                                return;
+                        }
+		}
+		
+		int x;
+		std::cout << tl->fd << std::endl;
+		if((x = fallocate(tl->fd, 0, 0, 10 * 1024 * 1024)) == -1){
+			std::cout << "[Init] WAL allocation error!" << std::endl;
+			return;
+		}
+
 		if(mode)
 			recover((char*)"device/raw/pairs.txt");
 		else
 			recover((char*)"device/blobs/pairs.txt");
-        	for(uint32_t i = 0; i < nprocs; i++)      
+        	
+		for(uint32_t i = 0; i < nprocs; i++)      
                 	//pthread_create(&threads[i], NULL, (void* (*)(void*))&tb_allocate_blob, NULL);
 			tb_allocate_blob();
         	//pthread_barrier_wait(&barrier);

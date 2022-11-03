@@ -1,7 +1,9 @@
 #include "ti_api.hpp"
 #include "tb_api.hpp"
+#include "tl_api.hpp"
 
 Tinyindex *ti = NULL;
+Tinylog *tl = NULL;
 pthread_rwlock_t rwlock;
 extern pthread_barrier_t barrier;
 extern uint32_t blob_size, mode;
@@ -39,7 +41,16 @@ int put(void *args){
 		return -1;
 	}
 	//pthread_rwlock_unlock(&rwlock);
-       // pthread_barrier_wait(&barrier);
+        // pthread_barrier_wait(&barrier);
+
+	append(tinfo->key, tinfo->value);
+
+	/*if(mode)
+		persist((char*)"device/raw/pairs.txt");
+	else
+		persist((char*)"device/blobs/pairs.txt");
+	*/
+
 	tinfo->result = 0;
 	return 0;
 }

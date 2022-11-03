@@ -1,7 +1,7 @@
 #ifndef TL_API
 #define TL_API
 
-#include "ti.hpp"
+#include "tl.hpp"
 
 void append(std::string key, std::string value); //Appends key, value in the log
 

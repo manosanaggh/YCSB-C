@@ -2,7 +2,7 @@ CC=g++
 CFLAGS=-std=c++17 -g -Wall -I./
 LDFLAGS= -pthread -ltbb -lhiredis
 SUBDIRS=core db redis
-SUBSRCS=$(wildcard core/*.cc) $(wildcard db/*.cc) cs647/assignment3/ti.cpp cs647/assignment3/ti_api.cpp cs647/assignment3/tb.cpp cs647/assignment3/tb_api.cpp cs647/assignment3/tl_api.cpp
+SUBSRCS=$(wildcard core/*.cc) $(wildcard db/*.cc) cs647/assignment3/ti.cpp cs647/assignment3/ti_api.cpp cs647/assignment3/tb.cpp cs647/assignment3/tb_api.cpp cs647/assignment3/tl_api.cpp cs647/assignment3/tl.cpp
 OBJECTS=$(SUBSRCS:.cc=.o)
 EXEC=ycsbc
 
