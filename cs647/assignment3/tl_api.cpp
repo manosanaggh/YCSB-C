@@ -35,6 +35,41 @@ void append(std::string key, std::string value){
 	tl->offset += ALIGNMENT;
 }
 
+void handler(int sig, siginfo_t *info, void *ucontext){ 
+        //checkpoint_metadata();
+	std::cout << "handler" << std::endl;
+	sigprocmask(SIG_UNBLOCK, &new_set, &old_set);
+} 
+
+void set_alarm(){
+        memset(&act, 0, sizeof(struct sigaction));
+	act.sa_sigaction = handler;
+	act.sa_flags = SA_SIGINFO;
+	ret = sigaction(SIGVTALRM, &act, NULL);
+        assert(ret == 0);
+	sigemptyset( &new_set );
+        sigaddset( &new_set, SIGVTALRM );
+
+        clock_id = CLOCK_MONOTONIC;
+        memset(&clock_sig_event, 0, sizeof( struct sigevent));
+        clock_sig_event.sigev_notify = SIGEV_SIGNAL;
+        clock_sig_event.sigev_signo = SIGVTALRM;
+        clock_sig_event.sigev_notify_attributes = NULL;
+
+        ret = timer_create(clock_id, &clock_sig_event, &timer_id);
+        assert(ret == 0);
+
+        memset(&timer_value, 0, sizeof(struct itimerspec));
+        timer_value.it_interval.tv_sec = 0;
+        timer_value.it_interval.tv_nsec = INTERVAL * 1000000;
+
+        timer_value.it_value.tv_sec = 0;
+        timer_value.it_value.tv_nsec = INTERVAL * 1000000;
+
+        ret = timer_settime(timer_id, 0, &timer_value, NULL);
+        assert(ret == 0);
+}
+
 void checkpoint_metadata(){
         std::string pairs_buf = "";
 
@@ -52,12 +87,12 @@ void checkpoint_metadata(){
         int x;
 
         if(fd == -1){
-                std::cout << "[PERSIST] *ERROR* : Opening file unsuccessful!" << std::endl;
+                std::cout << "[CHECKPOINT] *ERROR* : Opening file unsuccessful!" << std::endl;
                 return;
         }
 
         if(!ti->allocated && (x = fallocate(fd, 0, 0, 10 * 1024 * 1024)) == -1){
-                std::cout << "[PERSIST] *ERROR* : Allocating file unsuccessful!" << std::endl;
+                std::cout << "[CHECKPOINT] *ERROR* : Allocating file unsuccessful!" << std::endl;
                 return;
         }       
         else
@@ -66,14 +101,14 @@ void checkpoint_metadata(){
         char *tmp_data;                         
                                                         
         if(posix_memalign((void**)&tmp_data, ALIGNMENT, 10 * 1024 * 1024)){
-                std::cout << "[PERSIST] *ERROR*: posix_memalign failed!" << std::endl;
+                std::cout << "[CHECKPOINT] *ERROR*: posix_memalign failed!" << std::endl;
                 return;
         }
         
         strcpy(tmp_data, pairs_buf.c_str());
         
 	if((x = pwrite(fd, (const void *)(tmp_data), 10 * 1024 * 1024, 0)) == -1){
-                std::cout << "[PERSIST] *ERROR* : Writing file unsuccessful!" << std::endl;
+                std::cout << "[CHECKPOINT] *ERROR* : Writing file unsuccessful!" << std::endl;
                 return;
         }
 }

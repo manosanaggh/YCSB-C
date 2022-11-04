@@ -14,6 +14,7 @@ extern uint32_t mode, nprocs, blob_size, raw_size;
 extern pthread_rwlock_t rwlock;
 uint32_t allocate = 0;
 extern Tinylog *tl;
+extern void set_alarm();
 
 namespace ycsbc {
 
@@ -21,7 +22,7 @@ void CS647DB::Init() {
 	//pthread_t threads[1024];
 
         mode = 1;
-        nprocs = 100;
+        nprocs = 500;
         blob_size = 4096;
         raw_size = 10;
 
@@ -49,7 +50,6 @@ void CS647DB::Init() {
 		}
 		
 		int x;
-		std::cout << tl->fd << std::endl;
 		if((x = fallocate(tl->fd, 0, 0, 10 * 1024 * 1024)) == -1){
 			std::cout << "[Init] WAL allocation error!" << std::endl;
 			return;
@@ -65,17 +65,25 @@ void CS647DB::Init() {
 			tb_allocate_blob();
         	//pthread_barrier_wait(&barrier);
 		allocate = 1;
+
+		//set_alarm();
 	}
 }
 
 void CS647DB::Close() {
+	std::ofstream ofs;
 	std::cout << "CS647DB::Close" << std::endl;
 	if(allocate){
-                if(mode)
+                if(mode){
                         persist((char*)"device/raw/pairs.txt");
-                else
+			ofs.open("device/raw/wal.log", std::ofstream::out | std::ofstream::trunc);
+		}
+                else{
                         persist((char*)"device/blobs/pairs.txt");
+			ofs.open("device/blobs/wal.log", std::ofstream::out | std::ofstream::trunc);
+		}
 		allocate = 0;
+		ofs.close();
 	}
         
 	/*for(auto x : ti->__kv_store)

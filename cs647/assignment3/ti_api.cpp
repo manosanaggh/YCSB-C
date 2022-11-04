@@ -50,6 +50,7 @@ int put(void *args){
 			append(x.first, x.second);
 		}
 		tl->wal_buf.clear();
+		checkpoint_metadata();
 	}
 
 	tinfo->result = 0;
