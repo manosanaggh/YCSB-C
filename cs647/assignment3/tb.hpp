@@ -13,8 +13,12 @@
 #include <dirent.h>
 #include <bits/stdc++.h>
 #include <sys/time.h>
+#include <signal.h>
+#include <unistd.h>
+#include <time.h>
+#include <assert.h>
 
-#define ALIGNMENT 512	
+#define ALIGNMENT 512
 
 struct thread_info{                                                                                                                         
         int i;                                                                                 

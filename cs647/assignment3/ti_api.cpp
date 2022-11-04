@@ -50,17 +50,7 @@ int put(void *args){
 			append(x.first, x.second);
 		}
 		tl->wal_buf.clear();
-		//tb_shutdown();
 	}
-
-	//append(tinfo->key, tinfo->value);
-	//std::cout << tinfo->key << "," << tinfo->value << std::endl;
-
-	/*if(mode)
-		persist((char*)"device/raw/pairs.txt");
-	else
-		persist((char*)"device/blobs/pairs.txt");
-	*/
 
 	tinfo->result = 0;
 	return 0;
@@ -143,12 +133,14 @@ int close_scanner(std::ifstream *scanner){
 }
 
 void persist(char *location){
-	std::string pairs_buf = "";
+	checkpoint_metadata();
+	/*std::string pairs_buf = "";
 
         for(auto x : ti->__kv_store)                                               
-                for(auto y : x.second)
+                for(auto y : x.second){
 			if(y)
 				pairs_buf += x.first + "," + std::to_string(y->index()) + "\n";
+		}
 	
 	std::cout << location << std::endl;
 	int fd = open(location, O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
@@ -178,7 +170,7 @@ void persist(char *location){
 	if((x = pwrite(fd, (const void *)(tmp_data), 10 * 1024 * 1024, 0)) == -1){
 		std::cout << "[PERSIST] *ERROR* : Writing file unsuccessful!" << std::endl;
 		return;
-	}
+	}*/
 
 	// Debug
         /*for(auto x : ti->__kv_store)
