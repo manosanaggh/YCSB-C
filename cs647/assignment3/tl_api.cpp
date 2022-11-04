@@ -112,3 +112,17 @@ void checkpoint_metadata(){
                 return;
         }
 }
+
+int truncate(){
+	std::ofstream ofs;
+        if(mode)
+                ofs.open("device/raw/wal.log", std::ofstream::out | std::ofstream::trunc);                                
+        else                            
+                ofs.open("device/blobs/wal.log", std::ofstream::out | std::ofstream::trunc);
+        ofs.close(); 
+	return 0;
+}
+
+Tinyindex *replay(){
+	return NULL;
+}

@@ -33,7 +33,7 @@ void CS647DB::Init() {
         pthread_barrier_init(&barrier, NULL, nprocs+1);*/
 
 	if(!ti){
-		ti = new Tinyindex();
+		//ti = new Tinyindex();
 		tl = new Tinylog();
 		
 		if(mode){
@@ -55,10 +55,14 @@ void CS647DB::Init() {
 			return;
 		}
 
+		ti = replay();
+		if(!ti){
+			ti = new Tinyindex();
 		if(mode)
 			recover((char*)"device/raw/pairs.txt");
 		else
 			recover((char*)"device/blobs/pairs.txt");
+		}
         	
 		for(uint32_t i = 0; i < nprocs; i++)      
                 	//pthread_create(&threads[i], NULL, (void* (*)(void*))&tb_allocate_blob, NULL);
@@ -71,19 +75,14 @@ void CS647DB::Init() {
 }
 
 void CS647DB::Close() {
-	std::ofstream ofs;
 	std::cout << "CS647DB::Close" << std::endl;
 	if(allocate){
-                if(mode){
+                if(mode)
                         persist((char*)"device/raw/pairs.txt");
-			ofs.open("device/raw/wal.log", std::ofstream::out | std::ofstream::trunc);
-		}
-                else{
+                else
                         persist((char*)"device/blobs/pairs.txt");
-			ofs.open("device/blobs/wal.log", std::ofstream::out | std::ofstream::trunc);
-		}
 		allocate = 0;
-		ofs.close();
+		truncate();
 	}
         
 	/*for(auto x : ti->__kv_store)
