@@ -22,7 +22,7 @@ void CS647DB::Init() {
 	//pthread_t threads[1024];
 
         mode = 1;
-        nprocs = 500;
+        nprocs = 100;
         blob_size = 4096;
         raw_size = 10;
 
@@ -33,9 +33,9 @@ void CS647DB::Init() {
         pthread_barrier_init(&barrier, NULL, nprocs+1);*/
 
 	if(!ti){
-		//ti = new Tinyindex();
 		tl = new Tinylog();
-		
+		ti = replay();
+
 		if(mode){
         		if((tl->fd = open("device/raw/wal.log", O_RDWR|O_CREAT|O_DIRECT|O_SYNC, S_IRUSR|S_IWUSR)) == -1){
                 		std::cout << "[Init] Error with opening WAL" << std::endl;
@@ -55,13 +55,12 @@ void CS647DB::Init() {
 			return;
 		}
 
-		ti = replay();
 		if(!ti){
 			ti = new Tinyindex();
-		if(mode)
-			recover((char*)"device/raw/pairs.txt");
-		else
-			recover((char*)"device/blobs/pairs.txt");
+			if(mode)
+				recover((char*)"device/raw/pairs.txt");
+			else
+				recover((char*)"device/blobs/pairs.txt");
 		}
         	
 		for(uint32_t i = 0; i < nprocs; i++)      

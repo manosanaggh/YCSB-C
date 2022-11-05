@@ -4,7 +4,7 @@
 
 extern Tinylog *tl;
 extern Tinyindex *ti;
-extern uint32_t mode;
+extern uint32_t mode, blob_size;
 struct sigaction act;
 clockid_t clock_id;
 timer_t timer_id;
@@ -12,6 +12,7 @@ struct sigevent clock_sig_event;
 struct itimerspec timer_value;
 int ret;
 sigset_t new_set, old_set;
+extern std::vector<Tinyblob*> blobs;
 
 void append(std::string key, std::string value){                                 
         std::string pairs_buf = "";
@@ -32,7 +33,7 @@ void append(std::string key, std::string value){
                 std::cout << "[APPEND] *ERROR* : Writing file unsuccessful!" << std::endl;
                 return;                                                                    
         }    	
-	tl->offset += ALIGNMENT;
+	tl->offset += blob_size;
 }
 
 void handler(int sig, siginfo_t *info, void *ucontext){ 
@@ -114,15 +115,61 @@ void checkpoint_metadata(){
 }
 
 int truncate(){
-	std::ofstream ofs;
         if(mode)
-                ofs.open("device/raw/wal.log", std::ofstream::out | std::ofstream::trunc);                                
-        else                            
-                ofs.open("device/blobs/wal.log", std::ofstream::out | std::ofstream::trunc);
-        ofs.close(); 
+		remove("device/raw/wal.log");
+        else
+		remove("device/blobs/wal.log");
 	return 0;
 }
 
 Tinyindex *replay(){
-	return NULL;
+	Tinyindex *ti = NULL;
+	if(mode && access("device/raw/wal.log", F_OK) != 0)
+		return ti;
+	else if(!mode && access("device/blobs/wal.log", F_OK) != 0)
+		return ti;
+	ti = new Tinyindex();
+	int global_dev_offset = 0;
+        char *tmp_data;
+        if(posix_memalign((void**)&tmp_data, ALIGNMENT, blob_size))                       
+                std::cout << "posix_memalign failed!" << std::endl; 
+        int fd;
+	if(!mode){
+                if((fd = open("device/blobs/wal.log", O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR)) == -1)
+                        std::cout << "[REPLAY] Error with open" << std::endl;
+	}
+	else{
+                if((fd = open("device/raw/wal.log", O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR)) == -1)
+                        std::cout << "[REPLAY] Error with open" << std::endl;
+	}
+        if(pread(fd, tmp_data, blob_size, global_dev_offset) == -1)
+                std::cout << "[REPLAY] read failed!" << std::endl;
+        while(strcmp(tmp_data,"") != 0){
+                Tinyblob *tb = new Tinyblob();
+                tb->__free = false;
+                blobs.push_back(tb);
+		if(!mode){
+                        tb->__open((char*)"device/blobs/wal.log");
+			tb->setOffset(0);
+		}
+		else{
+			tb->__open((char*)"device/raw/wal.log");
+                        tb->setOffset(global_dev_offset);
+		}
+                tb->__persisted = true;
+                global_dev_offset += blob_size;
+
+        	std::string input(tmp_data);                                                     
+    		std::vector<std::string> result;                                
+        	boost::split(result, input, boost::is_any_of(","));
+        	std::string key;
+        	key = result[0];
+		strcpy((char*)blobs[tb->index()]->__io_buffer, result[1].c_str());
+        	ti->__kv_store[key].push_back(blobs[tb->index()]);     
+                
+		if(pread(tb->fd(), tmp_data, blob_size, global_dev_offset) == -1)
+                        std::cout << "read failed!" << std::endl;
+        }
+	
+	return ti;
 }

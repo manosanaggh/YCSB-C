@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <assert.h>
+#include <cstdio>
 
 #define ALIGNMENT 512
 

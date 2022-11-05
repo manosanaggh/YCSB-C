@@ -178,6 +178,9 @@ void persist(char *location){
                 for(auto y : x.second)                                                            
                         std::cout << "[PERSIST] Key: " << x.first << " | Value of blob " << y->index() << ": " << (char*)y->__io_buffer << std::endl;*/
 
+        for(Tinyblob *tb : blobs)                       
+                tb->printTb();
+
 	tb_shutdown();
 }
 
