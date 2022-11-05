@@ -131,7 +131,7 @@ int tb_write_blob(int index, void *data){
         else{    
         	Tinyblob *tb = new Tinyblob();
                 tb->__open((char*)"device/raw/file.txt");      
-                tb->setOffset((blobs.size() * blob_size) + blob_size);
+                tb->setOffset((blobs.size() * blob_size));
                 blobs.push_back(tb);      
                 if((x = tb_write_blob(tb->index(), data)) == 0)                         
                         std::cout << "[TB_WRITE_BLOB] Writen 0 bytes" << std::endl;

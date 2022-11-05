@@ -225,7 +225,7 @@ void recover(char *location){
     }
 
     	//Debug
-    	/*std::cout << "[RECOVER]" << std::endl;
+    	std::cout << "[RECOVER]" << std::endl;
         for(Tinyblob *tb : blobs)                       
-                tb->printTb();*/
+                tb->printTb();
 }

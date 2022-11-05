@@ -4,7 +4,7 @@
 
 extern Tinylog *tl;
 extern Tinyindex *ti;
-extern uint32_t mode, blob_size;
+extern uint32_t mode, blob_size, global_dev_offset;
 struct sigaction act;
 clockid_t clock_id;
 timer_t timer_id;
@@ -129,7 +129,7 @@ Tinyindex *replay(){
 	else if(!mode && access("device/blobs/wal.log", F_OK) != 0)
 		return ti;
 	ti = new Tinyindex();
-	int global_dev_offset = 0;
+	//int g_dev_offset = 0;
         char *tmp_data;
         if(posix_memalign((void**)&tmp_data, ALIGNMENT, blob_size))                       
                 std::cout << "posix_memalign failed!" << std::endl; 
@@ -156,7 +156,7 @@ Tinyindex *replay(){
 			tb->__open((char*)"device/raw/wal.log");
                         tb->setOffset(global_dev_offset);
 		}
-                tb->__persisted = true;
+                tb->__persisted = false;
                 global_dev_offset += blob_size;
 
         	std::string input(tmp_data);                                                     
@@ -171,5 +171,7 @@ Tinyindex *replay(){
                         std::cout << "read failed!" << std::endl;
         }
 	
+	//global_dev_offset = blobs.size() * blob_size;
+
 	return ti;
 }
