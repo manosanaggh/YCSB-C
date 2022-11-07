@@ -125,12 +125,9 @@ Tinyindex *replay(){
 	else if(!mode && access("device/blobs/wal.log", F_OK) != 0)
 		return ti;
 	ti = new Tinyindex();
-        char *tmp_data, *tmp_data2;
+        char *tmp_data;
 	uint32_t wal_offset = 0;
 	int x;
-
-        if(posix_memalign((void**)&tmp_data, ALIGNMENT, blob_size))                       
-                std::cout << "posix_memalign failed!" << std::endl; 
         int fd;
 	if(!mode){
                 if((fd = open("device/blobs/wal.log", O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR)) == -1)
@@ -141,70 +138,48 @@ Tinyindex *replay(){
                         std::cout << "[REPLAY] Error with open" << std::endl;
 	}
 
-        if(posix_memalign((void**)&tmp_data2, ALIGNMENT, 10 * 1024 * 1024)){   
+        if(posix_memalign((void**)&tmp_data, ALIGNMENT, 10 * 1024 * 1024)){   
                 std::cout << "[REPLAY] *ERROR*: posix_memalign failed!" << std::endl;                 
                 return NULL;                                                                   
         }
-        if((x = pread(fd, (void *)(tmp_data2), blob_size, wal_offset)) == -1){                              
+        if((x = pread(fd, (void *)(tmp_data), blob_size, wal_offset)) == -1){                              
                 std::cout << "[REPLAY] *ERROR* : Reading file unsuccessful!" << std::endl;
                 return NULL;                                              
         }
 
-	while(strcmp(tmp_data2,"") != 0){
-		std::string input(tmp_data2);
+	while(strcmp(tmp_data,"") != 0){
+		std::string input(tmp_data);
     		std::vector<std::string> result;
    		boost::split(result, input, boost::is_any_of("\n"));
  
     		for (int i = 0; i < (int)(result.size()-1); i++){
+                	Tinyblob *tb = new Tinyblob();
+                	tb->__free = false;
+                	blobs.push_back(tb);
+                	if(!mode){
+                        	tb->__open();
+                        	tb->setOffset(0);
+                	}
+                	else{
+                        	tb->__open((char*)"device/raw/file.txt");
+                        	tb->setOffset(global_dev_offset);
+                	}
+                	tb->__persisted = false;
+                	global_dev_offset += blob_size;
         		std::string input2(result[i]);                                                                                        				std::vector<std::string> result2;         
         		boost::split(result2, input2, boost::is_any_of(","));
         		std::string key;
         		key = result2[0];
-			std::cout << result2[0] << "," << result2[1] << std::endl;
-        		//ti->__kv_store[key].push_back(blobs[std::stoi(result2[1])]);                    
+			strcpy((char*)tb->__io_buffer, result2[1].c_str());
+			//std::cout << result2[0] << "," << result2[1] << std::endl;
+        		ti->__kv_store[key].push_back(tb);        
+
     		}
 		wal_offset += blob_size;
-        	if((x = pread(fd, (void *)(tmp_data2), blob_size, wal_offset)) == -1){                            
+        	if((x = pread(fd, (void *)(tmp_data), blob_size, wal_offset)) == -1){                            
                 	std::cout << "[REPLAY] *ERROR* : Reading file unsuccessful!" << std::endl;
                 	return NULL;                                              
         	}
 	}
-	return NULL;
-        /*std::vector<std::string> result2;
-        boost::split(result2, input, boost::is_any_of("\n"));
-        for(auto x : result2)
-                std::cout << x << std::endl;	
-*/
-/*        if(pread(fd, tmp_data, blob_size, global_dev_offset) == -1)
-                std::cout << "[REPLAY] read failed!" << std::endl;
-        while(strstr(tmp_data,"user")){
-                Tinyblob *tb = new Tinyblob();
-                tb->__free = false;
-                blobs.push_back(tb);
-		if(!mode){
-                        tb->__open();
-			tb->setOffset(0);
-		}
-		else{
-			tb->__open((char*)"device/raw/file.txt");
-                        tb->setOffset(global_dev_offset);
-		}
-                tb->__persisted = false;
-                global_dev_offset += blob_size;
-
-        	std::string input(tmp_data);                                                     
-    		std::vector<std::string> result;                       
-        	boost::split(result, input, boost::is_any_of(","));
-        	std::string key;
-        	key = result[0];
-		strcpy((char*)blobs[tb->index()]->__io_buffer, result[1].c_str());
-        	ti->__kv_store[key].push_back(blobs[tb->index()]);     
-                
-		if(pread(tb->fd(), tmp_data, blob_size, global_dev_offset) == -1)
-                        std::cout << "read failed!" << std::endl;
-        }
-
-	std::cout << global_dev_offset << std::endl;
-*/
 	return ti;
 }

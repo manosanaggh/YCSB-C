@@ -121,7 +121,6 @@ int tb_write_blob(int index, void *data){
                 memcpy(tmp_data, data, blob_size+1);     
                 if((x = pwrite(blobs[index]->fd(), (const void *)(tmp_data), blob_size, blobs[index]->offset()+ALIGNMENT)) == 0)
                         std::cout << "[TB_WRITE_BLOB] Writen 0 bytes" << std::endl; 
-		std::cout << blobs[index]->offset() << std::endl;
                 free(blobs[index]->__io_buffer);
                 if(posix_memalign(&(blobs[index]->__io_buffer), ALIGNMENT, blob_size))
                 	std::cout << "posix_memalign failed!" << std::endl;
@@ -213,7 +212,6 @@ if ((dir = opendir (location)) != NULL) {
                 char final_location[30] = "";
                 strcat(final_location, location);
                 strcat(final_location, ent->d_name);
-		std::cout << final_location << std::endl;
                 int fd;
                 if((fd = open(final_location, O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR)) == -1)
                         std::cout << "[TB_INIT] Error with open" << std::endl;

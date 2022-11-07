@@ -21,8 +21,8 @@ namespace ycsbc {
 void CS647DB::Init() {
 	//pthread_t threads[1024];
 
-        mode = 1;
-        nprocs = 100;
+        mode = 0;
+        nprocs = 300;
         blob_size = 4096;
         raw_size = 10;
 
@@ -57,11 +57,12 @@ void CS647DB::Init() {
 
 		if(!ti){
 			ti = new Tinyindex();
+		}
 			if(mode)
 				recover((char*)"device/raw/pairs.txt");
 			else
 				recover((char*)"device/blobs/pairs.txt");
-		}
+		//}
         	
 		for(uint32_t i = 0; i < nprocs; i++)      
                 	//pthread_create(&threads[i], NULL, (void* (*)(void*))&tb_allocate_blob, NULL);
@@ -81,7 +82,7 @@ void CS647DB::Close() {
                 else
                         persist((char*)"device/blobs/pairs.txt");
 		allocate = 0;
-		//truncate();
+		truncate();
 	}
         
 	/*for(auto x : ti->__kv_store)
