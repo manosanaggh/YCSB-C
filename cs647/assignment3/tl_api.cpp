@@ -14,11 +14,7 @@ int ret;
 sigset_t new_set, old_set;
 extern std::vector<Tinyblob*> blobs;
 
-void append(std::string key, std::string value){                                 
-        std::string pairs_buf = "";
-
-        pairs_buf += key + "," + value + "\n";
-
+void append(std::string wal_buf){                                 
         char *tmp_data;
  
         if(posix_memalign((void**)&tmp_data, ALIGNMENT, 10 * 1024 * 1024)){
@@ -26,7 +22,7 @@ void append(std::string key, std::string value){
                 return;
         }                                                                   
                                                                                       
-        strcpy(tmp_data, pairs_buf.c_str());
+        strcpy(tmp_data, wal_buf.c_str());
          
 	int x = -1;
         if((x = pwrite(tl->fd, (const void *)(tmp_data), 10 * 1024 * 1024, tl->offset)) == -1){
@@ -129,8 +125,10 @@ Tinyindex *replay(){
 	else if(!mode && access("device/blobs/wal.log", F_OK) != 0)
 		return ti;
 	ti = new Tinyindex();
-	//int g_dev_offset = 0;
-        char *tmp_data;
+        char *tmp_data, *tmp_data2;
+	uint32_t wal_offset = 0;
+	int x;
+
         if(posix_memalign((void**)&tmp_data, ALIGNMENT, blob_size))                       
                 std::cout << "posix_memalign failed!" << std::endl; 
         int fd;
@@ -142,25 +140,60 @@ Tinyindex *replay(){
                 if((fd = open("device/raw/wal.log", O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR)) == -1)
                         std::cout << "[REPLAY] Error with open" << std::endl;
 	}
-        if(pread(fd, tmp_data, blob_size, global_dev_offset) == -1)
+
+        if(posix_memalign((void**)&tmp_data2, ALIGNMENT, 10 * 1024 * 1024)){   
+                std::cout << "[REPLAY] *ERROR*: posix_memalign failed!" << std::endl;                 
+                return NULL;                                                                   
+        }
+        if((x = pread(fd, (void *)(tmp_data2), blob_size, wal_offset)) == -1){                              
+                std::cout << "[REPLAY] *ERROR* : Reading file unsuccessful!" << std::endl;
+                return NULL;                                              
+        }
+
+	while(strcmp(tmp_data2,"") != 0){
+		std::string input(tmp_data2);
+    		std::vector<std::string> result;
+   		boost::split(result, input, boost::is_any_of("\n"));
+ 
+    		for (int i = 0; i < (int)(result.size()-1); i++){
+        		std::string input2(result[i]);                                                                                        				std::vector<std::string> result2;         
+        		boost::split(result2, input2, boost::is_any_of(","));
+        		std::string key;
+        		key = result2[0];
+			std::cout << result2[0] << "," << result2[1] << std::endl;
+        		//ti->__kv_store[key].push_back(blobs[std::stoi(result2[1])]);                    
+    		}
+		wal_offset += blob_size;
+        	if((x = pread(fd, (void *)(tmp_data2), blob_size, wal_offset)) == -1){                            
+                	std::cout << "[REPLAY] *ERROR* : Reading file unsuccessful!" << std::endl;
+                	return NULL;                                              
+        	}
+	}
+	return NULL;
+        /*std::vector<std::string> result2;
+        boost::split(result2, input, boost::is_any_of("\n"));
+        for(auto x : result2)
+                std::cout << x << std::endl;	
+*/
+/*        if(pread(fd, tmp_data, blob_size, global_dev_offset) == -1)
                 std::cout << "[REPLAY] read failed!" << std::endl;
-        while(strcmp(tmp_data,"") != 0){
+        while(strstr(tmp_data,"user")){
                 Tinyblob *tb = new Tinyblob();
                 tb->__free = false;
                 blobs.push_back(tb);
 		if(!mode){
-                        tb->__open((char*)"device/blobs/wal.log");
+                        tb->__open();
 			tb->setOffset(0);
 		}
 		else{
-			tb->__open((char*)"device/raw/wal.log");
+			tb->__open((char*)"device/raw/file.txt");
                         tb->setOffset(global_dev_offset);
 		}
                 tb->__persisted = false;
                 global_dev_offset += blob_size;
 
         	std::string input(tmp_data);                                                     
-    		std::vector<std::string> result;                                
+    		std::vector<std::string> result;                       
         	boost::split(result, input, boost::is_any_of(","));
         	std::string key;
         	key = result[0];
@@ -170,8 +203,8 @@ Tinyindex *replay(){
 		if(pread(tb->fd(), tmp_data, blob_size, global_dev_offset) == -1)
                         std::cout << "read failed!" << std::endl;
         }
-	
-	//global_dev_offset = blobs.size() * blob_size;
 
+	std::cout << global_dev_offset << std::endl;
+*/
 	return ti;
 }

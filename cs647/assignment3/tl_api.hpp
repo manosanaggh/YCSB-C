@@ -5,7 +5,7 @@
 
 #define INTERVAL 2000
 
-void append(std::string key, std::string value); //Appends key, value in the log
+void append(std::string wal_buf); //Appends key, value in the log
 
 void checkpoint_metadata(); // checkpoints all metadata of the kv store
 

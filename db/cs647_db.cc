@@ -81,7 +81,7 @@ void CS647DB::Close() {
                 else
                         persist((char*)"device/blobs/pairs.txt");
 		allocate = 0;
-		truncate();
+		//truncate();
 	}
         
 	/*for(auto x : ti->__kv_store)

@@ -12,7 +12,8 @@ class Tinylog{
                 ~Tinylog();
                 int fd;
 		uint32_t offset;
-		std::vector<std::pair<std::string, std::string>> wal_buf;
+		std::string wal_buf;
+		uint32_t buf_sz;
 };
 
 #endif

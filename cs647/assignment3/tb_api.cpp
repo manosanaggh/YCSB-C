@@ -121,6 +121,7 @@ int tb_write_blob(int index, void *data){
                 memcpy(tmp_data, data, blob_size+1);     
                 if((x = pwrite(blobs[index]->fd(), (const void *)(tmp_data), blob_size, blobs[index]->offset()+ALIGNMENT)) == 0)
                         std::cout << "[TB_WRITE_BLOB] Writen 0 bytes" << std::endl; 
+		std::cout << blobs[index]->offset() << std::endl;
                 free(blobs[index]->__io_buffer);
                 if(posix_memalign(&(blobs[index]->__io_buffer), ALIGNMENT, blob_size))
                 	std::cout << "posix_memalign failed!" << std::endl;

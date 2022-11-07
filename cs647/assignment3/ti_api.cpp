@@ -42,14 +42,15 @@ int put(void *args){
 	}
 	//pthread_rwlock_unlock(&rwlock);
         // pthread_barrier_wait(&barrier);
-	if(tl->wal_buf.size() < 19)
-		tl->wal_buf.push_back(std::make_pair(tinfo->key, tinfo->value));
+	if(tl->buf_sz < 19){
+		tl->wal_buf += tinfo->key + "," + tinfo->value + "\n";
+		tl->buf_sz++;
+	}
 	else{
-		tl->wal_buf.push_back(std::make_pair(tinfo->key, tinfo->value));
-		for(auto x : tl->wal_buf){
-			append(x.first, x.second);
-		}
-		tl->wal_buf.clear();
+		tl->wal_buf += tinfo->key + "," + tinfo->value + "\n";
+		append(tl->wal_buf);
+		tl->wal_buf = "";
+		tl->buf_sz = 0;
 		checkpoint_metadata();
 	}
 
@@ -135,50 +136,8 @@ int close_scanner(std::ifstream *scanner){
 
 void persist(char *location){
 	checkpoint_metadata();
-	/*std::string pairs_buf = "";
 
-        for(auto x : ti->__kv_store)                                               
-                for(auto y : x.second){
-			if(y)
-				pairs_buf += x.first + "," + std::to_string(y->index()) + "\n";
-		}
-	
-	std::cout << location << std::endl;
-	int fd = open(location, O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
-	int x;
-
-	if(fd == -1){
-		std::cout << "[PERSIST] *ERROR* : Opening file unsuccessful!" << std::endl;
-		return;
-	}
-
-	if(!ti->allocated && (x = fallocate(fd, 0, 0, 10 * 1024 * 1024)) == -1){
-                std::cout << "[PERSIST] *ERROR* : Allocating file unsuccessful!" << std::endl;
-                return;
-	}	
-	else
-		ti->allocated = true;
-
-	char *tmp_data;
-
-        if(posix_memalign((void**)&tmp_data, ALIGNMENT, 10 * 1024 * 1024)){ 
-                std::cout << "[PERSIST] *ERROR*: posix_memalign failed!" << std::endl;
-		return;
-	}
-	
-	strcpy(tmp_data, pairs_buf.c_str());
-
-	if((x = pwrite(fd, (const void *)(tmp_data), 10 * 1024 * 1024, 0)) == -1){
-		std::cout << "[PERSIST] *ERROR* : Writing file unsuccessful!" << std::endl;
-		return;
-	}*/
-
-	// Debug
-        /*for(auto x : ti->__kv_store)
-                for(auto y : x.second)                                                            
-                        std::cout << "[PERSIST] Key: " << x.first << " | Value of blob " << y->index() << ": " << (char*)y->__io_buffer << std::endl;*/
-
-        for(Tinyblob *tb : blobs)                       
+	for(Tinyblob *tb : blobs)                       
                 tb->printTb();
 
 	tb_shutdown();
