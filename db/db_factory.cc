@@ -15,6 +15,7 @@
 #include "db/tbb_rand_db.h"
 #include "db/tbb_scan_db.h"
 #include "db/cs647_db.h"
+//#include "db/rocks_db.h"
 
 using namespace std;
 using ycsbc::DB;
@@ -40,3 +41,7 @@ DB* DBFactory::CreateDB(utils::Properties &props) {
 	return NULL;
 }
 
+/*DB* DBFactory::CreateDB(int num, utils::Properties& props)
+{
+  return new RocksDB(num, props);
+}*/
