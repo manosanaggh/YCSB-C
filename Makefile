@@ -12,7 +12,7 @@ $(SUBDIRS):
 	$(MAKE) -C $@
 
 $(EXEC): $(wildcard *.cc) $(OBJECTS)
-	$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+	$(CC) $(CFLAGS) $^ $(LDFLAGS) ../rocksdb/librocksdb.a /lib/x86_64-linux-gnu/libz.so -o $@
 
 clean:
 	for dir in $(SUBDIRS); do \

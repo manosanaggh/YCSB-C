@@ -9,7 +9,7 @@
 #ifndef YCSB_C_ROCKS_DB_H_
 #define YCSB_C_ROCKS_DB_H_
 
-#include "core/ycsbdb.h"
+#include "core/db.h"
 
 #include <iostream>
 #include <string>
@@ -46,12 +46,9 @@ namespace ycsbc {
 			std::shared_ptr<rocksdb::Cache> cache;
 
 		public:
-			RocksDB(int num, utils::Properties& props) : db_num(num), field_count(std::stoi(props.GetProperty(CoreWorkload::FIELD_COUNT_PROPERTY, CoreWorkload::FIELD_COUNT_DEFAULT))), dbs() {
-					
+			RocksDB(utils::Properties& props) : db_num(1), field_count(std::stoi(props.GetProperty(CoreWorkload::FIELD_COUNT_PROPERTY, CoreWorkload::FIELD_COUNT_DEFAULT))), dbs() {
 				cache = rocksdb::NewLRUCache(cache_size);
-						
 				for(int i = 0; i < db_num; ++i){
-
 					rocksdb::Options options;
 
 					options.compression = rocksdb::kNoCompression;
@@ -79,37 +76,16 @@ namespace ycsbc {
 				}
 			}
 
-			~RocksDB(){
+			virtual ~RocksDB(){
 				cout << "Calling ~RocksDB()..." << endl;
 				for(auto& d : dbs)
 					delete d;
 			}
 
 		public:
-  //Read a single record
-  int Read(const std::string &table, const std::string &key,
-           const std::vector<std::string> *fields,
-           std::vector<KVPair> &result);
-
-  //Perform a range scan
-  int Scan(const std::string &table, const std::string &key,
-           int len, const std::vector<std::string> *fields,
-           std::vector<std::vector<KVPair>> &result);
-
-  //Update a single record
-  int Update(const std::string &table, const std::string &key,
-             std::vector<KVPair> &values);
-
-  //Insert a single record
-  int Insert(const std::string &table, const std::string &key,
-             std::vector<KVPair> &values);
-
-  //Delete a single record
-  int Delete(const std::string &table, const std::string &key);
-
 			void Init(){}
 			void Close(){}
-			int Read(int id, const std::string &table, const std::string &key, const std::vector<std::string> *fields, std::vector<KVPair> &result)
+			int Read(/*int id, */const std::string &table, const std::string &key, const std::vector<std::string> *fields, std::vector<KVPair> &result)
 			{
 				std::hash<std::string> hash_;
 
@@ -143,14 +119,15 @@ namespace ycsbc {
 					std::vector<std::string> __fields;
 					for(int i = 0; i < field_count; ++i)
 						__fields.push_back("field" + std::to_string(i));
-					return Read(id, table, key, &__fields, result);
+					return Read(/*id, */table, key, &__fields, result);
 				}
 				
 				return 0;
 			}
 
-
-			int Scan(int id, const std::string &table, const std::string &key, int len, const std::vector<std::string> *fields, std::vector<KVPair> &result)
+int Scan(const std::string &table, const std::string &key,
+                   int len, const std::vector<std::string> *fields,  
+                   std::vector<KVPair> &result)
 			{
 				std::hash<std::string> hash_;
 				int items = 0;
@@ -203,7 +180,7 @@ namespace ycsbc {
 				return 0;
 			}
 
-			int Update(int id, const std::string &table, const std::string &key, std::vector<KVPair> &values)
+			int Update(/*int id, */const std::string &table, const std::string &key, std::vector<KVPair> &values)
 			{
 				if(field_count > 1){ // this results in read-modify-write. Maybe we should use merge operator here
 					std::hash<std::string> hash_;
@@ -239,13 +216,13 @@ namespace ycsbc {
 						new_values.push_back(kv);
 					}
 
-					return Insert(id, table, key, new_values);
+					return Insert(/*id,*/ table, key, new_values);
 				}else{
-					return Insert(id, table, key, values);
+					return Insert(/*id, */table, key, values);
 				}
 			}
 
-			int Insert(int id, const std::string &table, const std::string &key, std::vector<KVPair> &values)
+			int Insert(/*int id, */const std::string &table, const std::string &key, std::vector<KVPair> &values)
 			{
 				std::hash<std::string> hash_;
 
@@ -267,7 +244,7 @@ namespace ycsbc {
 				return 0;
 			}
 
-			int Delete(int id, const std::string &table, const std::string &key)
+			int Delete(/*int id,*/ const std::string &table, const std::string &key)
 			{
 				std::cerr << "DELETE " << table << ' ' << key << std::endl;
 				std::cerr << "Delete() not implemented [" << __FILE__ << ":" << __func__ << "():" << __LINE__ << "]" << std::endl;

@@ -57,7 +57,10 @@ class DB {
   ///
   virtual int Scan(const std::string &table, const std::string &key,
                    int record_count, const std::vector<std::string> *fields,
-                   std::vector<std::vector<KVPair>> &result) = 0;
+                   std::vector<std::vector<KVPair>> &result){};
+
+  virtual int Scan(const std::string &table, const std::string &key, int record_count,
+                   const std::vector<std::string> *fields, std::vector<KVPair> &result){};
   ///
   /// Updates a record in the database.
   /// Field/value pairs in the specified vector are written to the record,

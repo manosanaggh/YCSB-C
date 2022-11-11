@@ -1,4 +1,4 @@
-#rm -rf device
+rm -rf device
 mkdir -p device
 mkdir -p device/blobs
 mkdir -p device/raw
