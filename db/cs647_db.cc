@@ -21,7 +21,7 @@ namespace ycsbc {
 void CS647DB::Init() {
 	//pthread_t threads[1024];
 
-        mode = 0;
+        mode = 1;
         nprocs = 300;
         blob_size = 4096;
         raw_size = 10;

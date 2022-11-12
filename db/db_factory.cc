@@ -37,8 +37,9 @@ DB* DBFactory::CreateDB(utils::Properties &props) {
 	return new TbbScanDB;
   else if (props["dbname"] == "cs647")	
 	return new CS647DB;
-  else if(props["dbname"] == "rocksdb")
+  else if(props["dbname"] == "rocksdb"){
 	  return new RocksDB(props);
+  }
   else
 	return NULL;
 }

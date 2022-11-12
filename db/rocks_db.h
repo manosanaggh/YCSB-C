@@ -47,11 +47,10 @@ namespace ycsbc {
 
 		public:
 			RocksDB(utils::Properties& props) : 
-				db_num(1), 
-				field_count(std::stoi(props.GetProperty(CoreWorkload::FIELD_COUNT_PROPERTY, 
-				CoreWorkload::FIELD_COUNT_DEFAULT))), 
-				dbs() {
-
+			db_num(1), 
+			field_count(std::stoi(props.GetProperty(CoreWorkload::FIELD_COUNT_PROPERTY, 
+			CoreWorkload::FIELD_COUNT_DEFAULT))), 
+			dbs() {
 				cache = rocksdb::NewLRUCache(cache_size);
 				for(int i = 0; i < db_num; ++i){
 					rocksdb::Options options;
@@ -78,7 +77,6 @@ namespace ycsbc {
 						std::cerr << status.ToString() << std::endl;
 
 					dbs.push_back(db);
-					std::cout << "[Constructor] DB pushed to vector." << std::endl;
 				}
 			}
 
@@ -242,7 +240,6 @@ namespace ycsbc {
           				value.append(1, ' ');
         			}
         			value.pop_back();
-	
 				rocksdb::Status ret = dbs[hash_(key) % db_num]->Put(rocksdb::WriteOptions(), key, value);
 				if(ret.ok() != true){
 					std::cout << "CANNOT INSERT KEY!" << std::endl;
