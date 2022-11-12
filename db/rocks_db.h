@@ -46,7 +46,12 @@ namespace ycsbc {
 			std::shared_ptr<rocksdb::Cache> cache;
 
 		public:
-			RocksDB(utils::Properties& props) : db_num(1), field_count(std::stoi(props.GetProperty(CoreWorkload::FIELD_COUNT_PROPERTY, CoreWorkload::FIELD_COUNT_DEFAULT))), dbs() {
+			RocksDB(utils::Properties& props) : 
+				db_num(1), 
+				field_count(std::stoi(props.GetProperty(CoreWorkload::FIELD_COUNT_PROPERTY, 
+				CoreWorkload::FIELD_COUNT_DEFAULT))), 
+				dbs() {
+
 				cache = rocksdb::NewLRUCache(cache_size);
 				for(int i = 0; i < db_num; ++i){
 					rocksdb::Options options;
@@ -73,6 +78,7 @@ namespace ycsbc {
 						std::cerr << status.ToString() << std::endl;
 
 					dbs.push_back(db);
+					std::cout << "[Constructor] DB pushed to vector." << std::endl;
 				}
 			}
 
@@ -84,9 +90,12 @@ namespace ycsbc {
 
 		public:
 			void Init(){}
+
 			void Close(){}
-			int Read(/*int id, */const std::string &table, const std::string &key, const std::vector<std::string> *fields, std::vector<KVPair> &result)
-			{
+
+			int Read(const std::string &table, const std::string &key, 
+				 const std::vector<std::string> *fields, std::vector<KVPair> &result){
+
 				std::hash<std::string> hash_;
 
 				if(fields){
@@ -97,38 +106,38 @@ namespace ycsbc {
 						exit(EXIT_FAILURE);
 					}
 
-        	std::vector<std::string> tokens;
-        	boost::split(tokens, value, boost::is_any_of(" "));
+        				std::vector<std::string> tokens;
+        				boost::split(tokens, value, boost::is_any_of(" "));
 
 					std::map<std::string, std::string> vmap;
-        	for(std::map<std::string, std::string>::size_type i = 0 ; i + 1 < tokens.size(); i += 2){
-          	vmap.insert(std::pair<std::string, std::string>(tokens[i], tokens[i+1]));
-        	}
+        				for(std::map<std::string, std::string>::size_type i = 0 ; i + 1 < tokens.size(); i += 2){
+          					vmap.insert(std::pair<std::string, std::string>(tokens[i], tokens[i+1]));
+        				}
 
-        	for(auto f : *fields){
-          	std::map<std::string, std::string>::iterator it = vmap.find(f);
-          	if(it == vmap.end()){
-            	std::cout << "cannot find : " << f << " in DB" << std::endl;
-            	exit(EXIT_FAILURE);
-          	}
+        				for(auto f : *fields){
+          					std::map<std::string, std::string>::iterator it = vmap.find(f);
+          					if(it == vmap.end()){
+            						std::cout << "cannot find : " << f << " in DB" << std::endl;
+            						exit(EXIT_FAILURE);
+          					}
 
-          	KVPair k = std::make_pair(f, it->second);
-          	result.push_back(k);
-        	}
+          					KVPair k = std::make_pair(f, it->second);
+          					result.push_back(k);
+        				}
 				}else{
 					std::vector<std::string> __fields;
 					for(int i = 0; i < field_count; ++i)
 						__fields.push_back("field" + std::to_string(i));
-					return Read(/*id, */table, key, &__fields, result);
+					return Read(table, key, &__fields, result);
 				}
 				
 				return 0;
 			}
 
-int Scan(const std::string &table, const std::string &key,
-                   int len, const std::vector<std::string> *fields,  
-                   std::vector<KVPair> &result)
-			{
+			int Scan(const std::string &table, const std::string &key,
+                   		int len, const std::vector<std::string> *fields,  
+                   		std::vector<KVPair> &result){
+
 				std::hash<std::string> hash_;
 				int items = 0;
 				bool done = false;
@@ -143,12 +152,12 @@ int Scan(const std::string &table, const std::string &key,
 				{
 					std::string kk = it->key().ToString();
 					std::string value = it->value().ToString();
-        	std::vector<std::string> tokens;
-        	boost::split(tokens, value, boost::is_any_of(" "));
+        				std::vector<std::string> tokens;
+        				boost::split(tokens, value, boost::is_any_of(" "));
 					std::map<std::string, std::string> vmap;
-        	for(std::map<std::string, std::string>::size_type i = 0 ; i + 1 < tokens.size(); i += 2){
-          	vmap.insert(std::pair<std::string, std::string>(tokens[i], tokens[i+1]));
-        	}
+        				for(std::map<std::string, std::string>::size_type i = 0 ; i + 1 < tokens.size(); i += 2){
+          					vmap.insert(std::pair<std::string, std::string>(tokens[i], tokens[i+1]));
+        				}
 
 					for(std::map<std::string, std::string>::iterator it = vmap.begin(); it != vmap.end(); ++it){
 						KVPair kv = std::make_pair(kk + it->first, it->second);
@@ -180,7 +189,7 @@ int Scan(const std::string &table, const std::string &key,
 				return 0;
 			}
 
-			int Update(/*int id, */const std::string &table, const std::string &key, std::vector<KVPair> &values)
+			int Update(const std::string &table, const std::string &key, std::vector<KVPair> &values)
 			{
 				if(field_count > 1){ // this results in read-modify-write. Maybe we should use merge operator here
 					std::hash<std::string> hash_;
@@ -191,23 +200,23 @@ int Scan(const std::string &table, const std::string &key,
 						exit(EXIT_FAILURE);
 					}
 
-        	std::vector<std::string> tokens;
-        	boost::split(tokens, value, boost::is_any_of(" "));
+        				std::vector<std::string> tokens;
+        				boost::split(tokens, value, boost::is_any_of(" "));
 
 					std::map<std::string, std::string> vmap;
-        	for(std::map<std::string, std::string>::size_type i = 0 ; i + 1 < tokens.size(); i += 2){
-          	vmap.insert(std::pair<std::string, std::string>(tokens[i], tokens[i+1]));
-        	}
+        				for(std::map<std::string, std::string>::size_type i = 0 ; i + 1 < tokens.size(); i += 2){
+          					vmap.insert(std::pair<std::string, std::string>(tokens[i], tokens[i+1]));
+        				}
 
 					for(auto f : values){
-          	std::map<std::string, std::string>::iterator it = vmap.find(f.first);
-          	if(it == vmap.end()){
-            	std::cout << "[2][UPDATE] Cannot find : " << f.first << " in DB" << std::endl;
-            	exit(EXIT_FAILURE);
-          	}
+          					std::map<std::string, std::string>::iterator it = vmap.find(f.first);
+          					if(it == vmap.end()){
+            						std::cout << "[2][UPDATE] Cannot find : " << f.first << " in DB" << std::endl;
+            						exit(EXIT_FAILURE);
+          					}
 
-          	it->second = f.second;
-        	}
+          					it->second = f.second;
+        				}
 
 
 					std::vector<KVPair> new_values;
@@ -216,24 +225,23 @@ int Scan(const std::string &table, const std::string &key,
 						new_values.push_back(kv);
 					}
 
-					return Insert(/*id,*/ table, key, new_values);
+					return Insert(table, key, new_values);
 				}else{
-					return Insert(/*id, */table, key, values);
+					return Insert(table, key, values);
 				}
 			}
 
-			int Insert(/*int id, */const std::string &table, const std::string &key, std::vector<KVPair> &values)
-			{
+			int Insert(const std::string &table, const std::string &key, std::vector<KVPair> &values){
 				std::hash<std::string> hash_;
 
 				std::string value;  
-        for(auto v : values){
-          value.append(v.first);
-          value.append(1, ' ');
-          value.append(v.second);
-          value.append(1, ' ');
-        }
-        value.pop_back();
+        			for(auto v : values){
+          				value.append(v.first);
+          				value.append(1, ' ');
+          				value.append(v.second);
+          				value.append(1, ' ');
+        			}
+        			value.pop_back();
 	
 				rocksdb::Status ret = dbs[hash_(key) % db_num]->Put(rocksdb::WriteOptions(), key, value);
 				if(ret.ok() != true){
@@ -244,10 +252,13 @@ int Scan(const std::string &table, const std::string &key,
 				return 0;
 			}
 
-			int Delete(/*int id,*/ const std::string &table, const std::string &key)
+			int Delete(const std::string &table, const std::string &key)
 			{
 				std::cerr << "DELETE " << table << ' ' << key << std::endl;
-				std::cerr << "Delete() not implemented [" << __FILE__ << ":" << __func__ << "():" << __LINE__ << "]" << std::endl;
+				std::cerr << "Delete() not implemented [" 
+					<< __FILE__ << ":" 
+					<< __func__ << "():" 
+					<< __LINE__ << "]" << std::endl;
 				exit(EXIT_FAILURE);
 			}
 	};
