@@ -13,11 +13,12 @@ struct itimerspec timer_value;
 int ret;
 sigset_t new_set, old_set;
 extern std::vector<Tinyblob*> blobs;
+extern long raw_size;
 
 void append(std::string wal_buf){                                 
         char *tmp_data;
  
-        if(posix_memalign((void**)&tmp_data, ALIGNMENT, 10 * 1024 * 1024)){
+        if(posix_memalign((void**)&tmp_data, ALIGNMENT, 10 * 1024L * 1024L)){
                 std::cout << "[APPEND] *ERROR*: posix_memalign failed!" << std::endl;
                 return;
         }                                                                   
@@ -25,7 +26,7 @@ void append(std::string wal_buf){
         strcpy(tmp_data, wal_buf.c_str());
          
 	int x = -1;
-        if((x = pwrite(tl->fd, (const void *)(tmp_data), 10 * 1024 * 1024, tl->offset)) == -1){
+        if((x = pwrite(tl->fd, (const void *)(tmp_data), 10 * 1024L * 1024L, tl->offset)) == -1){
                 std::cout << "[APPEND] *ERROR* : Writing file unsuccessful!" << std::endl;
                 return;                                                                    
         }    	
@@ -76,19 +77,23 @@ void checkpoint_metadata(){
                                 pairs_buf += x.first + "," + std::to_string(y->index()) + "\n";
                 }
         
-        int fd;
-	if(!mode)
-		fd = open("device/blobs/pairs.txt", O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
-	else
-		fd = open("device/raw/pairs.txt", O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
+        //int fd;
+	if(!mode){
+		if(ti->fd == -1)
+			ti->fd = open("device/blobs/pairs.txt", O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
+	}
+	else{
+		if(ti->fd == -1)
+			ti->fd = open("device/raw/pairs.txt", O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
+	}
         int x;
 
-        if(fd == -1){
+        if(ti->fd == -1){
                 std::cout << "[CHECKPOINT] *ERROR* : Opening file unsuccessful!" << std::endl;
                 return;
         }
 
-        if(!ti->allocated && (x = fallocate(fd, 0, 0, 10 * 1024 * 1024)) == -1){
+        if(!ti->allocated && (x = fallocate(ti->fd, 0, 0, raw_size)) == -1){
                 std::cout << "[CHECKPOINT] *ERROR* : Allocating file unsuccessful!" << std::endl;
                 return;
         }       
@@ -97,14 +102,14 @@ void checkpoint_metadata(){
                        
         char *tmp_data;                         
                                                         
-        if(posix_memalign((void**)&tmp_data, ALIGNMENT, 10 * 1024 * 1024)){
+        if(posix_memalign((void**)&tmp_data, ALIGNMENT, 10 * 1024L * 1024L)){
                 std::cout << "[CHECKPOINT] *ERROR*: posix_memalign failed!" << std::endl;
                 return;
         }
         
         strcpy(tmp_data, pairs_buf.c_str());
         
-	if((x = pwrite(fd, (const void *)(tmp_data), 10 * 1024 * 1024, 0)) == -1){
+	if((x = pwrite(ti->fd, (const void *)(tmp_data), 10 * 1024L * 1024L, 0)) == -1){
                 std::cout << "[CHECKPOINT] *ERROR* : Writing file unsuccessful!" << std::endl;
                 return;
         }
@@ -128,21 +133,23 @@ Tinyindex *replay(){
         char *tmp_data;
 	uint32_t wal_offset = 0;
 	int x;
-        int fd;
+        //int fd;
 	if(!mode){
-                if((fd = open("device/blobs/wal.log", O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR)) == -1)
-                        std::cout << "[REPLAY] Error with open" << std::endl;
+                if(tl->fd == -1)
+			if((tl->fd = open("device/blobs/wal.log", O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR)) == -1)
+                        	std::cout << "[REPLAY] Error with open" << std::endl;
 	}
 	else{
-                if((fd = open("device/raw/wal.log", O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR)) == -1)
-                        std::cout << "[REPLAY] Error with open" << std::endl;
+		if(tl->fd == -1)
+                	if((tl->fd = open("device/raw/wal.log", O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR)) == -1)
+                        	std::cout << "[REPLAY] Error with open" << std::endl;
 	}
 
-        if(posix_memalign((void**)&tmp_data, ALIGNMENT, 10 * 1024 * 1024)){   
+        if(posix_memalign((void**)&tmp_data, ALIGNMENT, 10 * 1024L * 1024L)){   
                 std::cout << "[REPLAY] *ERROR*: posix_memalign failed!" << std::endl;                 
                 return NULL;                                                                   
         }
-        if((x = pread(fd, (void *)(tmp_data), blob_size, wal_offset)) == -1){                              
+        if((x = pread(tl->fd, (void *)(tmp_data), blob_size, wal_offset)) == -1){                              
                 std::cout << "[REPLAY] *ERROR* : Reading file unsuccessful!" << std::endl;
                 return NULL;                                              
         }
@@ -176,7 +183,7 @@ Tinyindex *replay(){
 
     		}
 		wal_offset += blob_size;
-        	if((x = pread(fd, (void *)(tmp_data), blob_size, wal_offset)) == -1){                            
+        	if((x = pread(tl->fd, (void *)(tmp_data), blob_size, wal_offset)) == -1){                            
                 	std::cout << "[REPLAY] *ERROR* : Reading file unsuccessful!" << std::endl;
                 	return NULL;                                              
         	}

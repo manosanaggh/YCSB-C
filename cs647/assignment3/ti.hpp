@@ -30,6 +30,7 @@ class Tinyindex{
 		std::ifstream scanner;
 		bool allocated;
 		Thread_info *tinfo;
+		int fd;
 };
 
 #endif

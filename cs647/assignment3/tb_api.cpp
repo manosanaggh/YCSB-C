@@ -1,6 +1,7 @@
 #include "tb_api.hpp"
 
-uint32_t mode, nprocs, blob_size, raw_size, global_dev_offset = 0;
+uint32_t mode, nprocs, blob_size, global_dev_offset = 0;
+long raw_size;
 
 std::vector<Tinyblob*> blobs;
 pthread_mutex_t lock;
@@ -30,12 +31,12 @@ int tb_allocate_blob(){
 	tb->__open((char*)"device/raw/file.txt");
 	int x;
         if (access("device/raw/file.txt", F_OK) == 0 && tb->created){      
-        	if((x = fallocate(tb->fd(), 0, 0, raw_size * 1024 * 1024)) == -1){
+        	if((x = fallocate(Tinyblob::raw_fd, 0, 0, raw_size)) == -1){
 			std::cout << "[TB_ALLOCATE_BLOB] Problem with falllocate!" << std::endl;
 			return -1;
 		}
 	}
-	if(tb->fd() < 0){
+	if(Tinyblob::raw_fd < 0){
 		blobs[tb->index()]->ti->result = -1;
 		return -1;
 	}
@@ -65,7 +66,7 @@ void tb_free_blob(int index){
 				blobs[index]->__close();
 			}
 	}
-        if(blobs[index]->fd() >= 0)                                                       
+        if(Tinyblob::raw_fd >= 0)                                                       
                 if(index >= 0 && index <= (int)Tinyblob::cnt_blob())                      
                         blobs[index]->__close();
 }
@@ -108,18 +109,18 @@ int tb_write_blob(int index, void *data){
 		}
         }
 
-        if(pread(blobs[index]->fd(), tmp_data, blob_size, blobs[index]->offset()+0) == -1)
+        if(pread(Tinyblob::raw_fd, tmp_data, blob_size, blobs[index]->offset()+0) == -1)
 		std::cout << "read failed!" << std::endl;
 	
 	if(tmp_data[0] != '1')
                 blobs[index]->__free = true;
 	
-        if(blobs[index]->fd() >= 0 && blobs[index]->is_free()){
+        if(Tinyblob::raw_fd >= 0 && blobs[index]->is_free()){
                 memcpy(tmp_data, "1", 2);
-                if((x = pwrite(blobs[index]->fd(), (const void *)(tmp_data), blob_size, blobs[index]->offset()+0)) == 0)     
+                if((x = pwrite(Tinyblob::raw_fd, (const void *)(tmp_data), blob_size, blobs[index]->offset()+0)) == 0)     
                         std::cout << "[TB_WRITE_BLOB] Writen 0 bytes" << std::endl;
                 memcpy(tmp_data, data, blob_size+1);     
-                if((x = pwrite(blobs[index]->fd(), (const void *)(tmp_data), blob_size, blobs[index]->offset()+ALIGNMENT)) == 0)
+                if((x = pwrite(Tinyblob::raw_fd, (const void *)(tmp_data), blob_size, blobs[index]->offset()+ALIGNMENT)) == 0)
                         std::cout << "[TB_WRITE_BLOB] Writen 0 bytes" << std::endl; 
                 free(blobs[index]->__io_buffer);
                 if(posix_memalign(&(blobs[index]->__io_buffer), ALIGNMENT, blob_size))
@@ -159,8 +160,8 @@ int tb_read_blob(void *args){
 			ti->result = x;
 			return x;
 		}
-        if(blobs[ti->i]->fd() >= 0){
-                int x = pread(blobs[ti->i]->fd(), tmp_data, blob_size, blobs[ti->i]->offset()+ALIGNMENT);
+        if(Tinyblob::raw_fd >= 0){
+                int x = pread(Tinyblob::raw_fd, tmp_data, blob_size, blobs[ti->i]->offset()+ALIGNMENT);
                 pthread_mutex_lock(&lock);
                 memcpy(*((char**)ti->buffer), tmp_data, blob_size+1);
                 pthread_mutex_unlock(&lock);
@@ -250,10 +251,10 @@ if ((dir = opendir (location)) != NULL) {
 			tb->__open(final_location);
 			tb->setOffset(global_dev_offset);
 			tb->__persisted = true;
-                        if(pread(tb->fd(), tb->__io_buffer, blob_size, tb->offset()+ALIGNMENT) == -1)
+                        if(pread(fd, tb->__io_buffer, blob_size, tb->offset()+ALIGNMENT) == -1)
                                 std::cout << "[TB_INIT] read failed!" << std::endl;
 			global_dev_offset += blob_size;
-                        if(pread(tb->fd(), tmp_data, blob_size, global_dev_offset+0) == -1)
+                        if(pread(fd, tmp_data, blob_size, global_dev_offset+0) == -1)
                                 std::cout << "read failed!" << std::endl;
 		}
 	}

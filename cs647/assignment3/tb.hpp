@@ -46,6 +46,7 @@ class Tinyblob{
 		struct thread_info *ti;
 		bool __free;
 		bool __persisted;
+		static int raw_fd;
 
 		inline void setIndex(uint32_t index){
         		__index = index;
@@ -64,13 +65,15 @@ class Tinyblob{
 		}
 
 		inline void printTb(){
+			/*
 			std::cout << "INDEX: " << __index 
-				<< "\tFD: " << __fd 
+				<< "\tFD: " << __fd
+				<< "\tRAW_FD: " << raw_fd
 				<< "\tNAME: " << __name 
 				<< "\tBLOB_COUNT: " << __cnt_blob 
 				<< "\tIO_BUFFER: " << (char*)__io_buffer
 				<< "\tRAW DEVICE OFFSET: " << __offset
-				<< std::endl;
+				<< std::endl;*/
 		}
 
 		void __open();

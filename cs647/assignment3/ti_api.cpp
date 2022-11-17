@@ -8,6 +8,7 @@ pthread_rwlock_t rwlock;
 extern pthread_barrier_t barrier;
 extern uint32_t blob_size, mode;
 extern std::vector<Tinyblob*> blobs;
+extern long raw_size;
 
 //Multithreaded
 int put(void *args){
@@ -147,9 +148,9 @@ void recover(char *location){
 	if(mode) tb_init((char*)"device/raw/");
 	else tb_init((char*)"device/blobs/");
 
-        int fd = open(location, O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
+        ti->fd = open(location, O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
 
-        if(fd == -1){
+        if(ti->fd == -1){
                 std::cout << "[RECOVER] *ERROR* : Opening file unsuccessful!" << std::endl;
                 return;
         }
@@ -157,12 +158,12 @@ void recover(char *location){
         char *tmp_data;
 	int x;
 
-        if(posix_memalign((void**)&tmp_data, ALIGNMENT, 10 * 1024 * 1024)){ 
+        if(posix_memalign((void**)&tmp_data, ALIGNMENT, 10 * 1024L * 1024L)){ 
                 std::cout << "[RECOVER] *ERROR*: posix_memalign failed!" << std::endl;
                 return;
         }
         
-        if((x = pread(fd, (void *)(tmp_data), 10 * 1024 * 1024, 0)) == -1){
+        if((x = pread(ti->fd, (void *)(tmp_data), 10 * 1024L * 1024L, 0)) == -1){
                 std::cout << "[RECOVER] *ERROR* : Reading file unsuccessful!" << std::endl;
                 return;
         }

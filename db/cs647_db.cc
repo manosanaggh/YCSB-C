@@ -10,7 +10,8 @@
 
 extern pthread_barrier_t barrier;
 extern Tinyindex *ti;
-extern uint32_t mode, nprocs, blob_size, raw_size; 
+extern uint32_t mode, nprocs, blob_size;
+extern long raw_size;
 extern pthread_rwlock_t rwlock;
 uint32_t allocate = 0;
 extern Tinylog *tl;
@@ -22,9 +23,9 @@ void CS647DB::Init() {
 	//pthread_t threads[1024];
 
         mode = 1;
-        nprocs = 300;
+        nprocs = 300000;
         blob_size = 4096;
-        raw_size = 10;
+        raw_size = 10 * 1024L * 1024L * 1024L;
 
         /*if (pthread_rwlock_init(&rwlock, NULL) != 0) {
                 printf("\n rwlock init has failed\n");
@@ -50,7 +51,7 @@ void CS647DB::Init() {
 		}
 		
 		int x;
-		if((x = fallocate(tl->fd, 0, 0, 10 * 1024 * 1024)) == -1){
+		if((x = fallocate(tl->fd, 0, 0, raw_size)) == -1){
 			std::cout << "[Init] WAL allocation error!" << std::endl;
 			return;
 		}
@@ -153,10 +154,10 @@ int CS647DB::Update(const std::string &table, const std::string &key,
                 //pthread_create(&threads[i], NULL, (void* (*)(void*))&put, tinfo);
                 //pthread_barrier_wait(&barrier);
 		put(tinfo);
-                if(tinfo->result == -1)
+                /*if(tinfo->result == -1)
                         std::cout << "[UPDATE] No free blobs!" << std::endl;
 		else
-			std::cout << "[UPDATE] Successful!" << std::endl;
+			std::cout << "[UPDATE] Successful!" << std::endl;*/
         }
         return 0;
 }

@@ -1,6 +1,7 @@
 #include "tb.hpp"
 
 uint32_t Tinyblob::__cnt_blob = 0;
+int Tinyblob::raw_fd = -1;
 extern uint32_t blob_size;
 
 Tinyblob::Tinyblob(){
@@ -8,6 +9,7 @@ Tinyblob::Tinyblob(){
 	ti = (struct thread_info*)malloc(sizeof(struct thread_info));
 	__free = true;
 	__persisted = false;
+	__fd = -1;
 }
                   
 Tinyblob::~Tinyblob(){
@@ -33,10 +35,12 @@ void Tinyblob::__open(char *device){
 	__index = __cnt_blob;	
 	setName();
         if (access(device, F_OK) == 0) {     
-                __fd = open(device, O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
+                if(raw_fd == -1)
+			raw_fd = open(device, O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
 		created = 0;
         } else {                                                                                  
-                __fd = open(device, O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
+                if(raw_fd == -1)
+			raw_fd = open(device, O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
 		created = 1;
         } 
 }
