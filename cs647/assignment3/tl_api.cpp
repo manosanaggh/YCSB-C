@@ -80,11 +80,11 @@ void checkpoint_metadata(){
         //int fd;
 	if(!mode){
 		if(ti->fd == -1)
-			ti->fd = open("device/blobs/pairs.txt", O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
+			ti->fd = open("/mnt/fmap/device/blobs/pairs.txt", O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
 	}
 	else{
 		if(ti->fd == -1)
-			ti->fd = open("device/raw/pairs.txt", O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
+			ti->fd = open("/mnt/fmap/device/raw/pairs.txt", O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
 	}
         int x;
 
@@ -117,17 +117,17 @@ void checkpoint_metadata(){
 
 int truncate(){
         if(mode)
-		remove("device/raw/wal.log");
+		remove("/mnt/fmap/device/raw/wal.log");
         else
-		remove("device/blobs/wal.log");
+		remove("/mnt/fmap/device/blobs/wal.log");
 	return 0;
 }
 
 Tinyindex *replay(){
 	Tinyindex *ti = NULL;
-	if(mode && access("device/raw/wal.log", F_OK) != 0)
+	if(mode && access("/mnt/fmap/device/raw/wal.log", F_OK) != 0)
 		return ti;
-	else if(!mode && access("device/blobs/wal.log", F_OK) != 0)
+	else if(!mode && access("/mnt/fmap/device/blobs/wal.log", F_OK) != 0)
 		return ti;
 	ti = new Tinyindex();
         char *tmp_data;
@@ -136,12 +136,12 @@ Tinyindex *replay(){
         //int fd;
 	if(!mode){
                 if(tl->fd == -1)
-			if((tl->fd = open("device/blobs/wal.log", O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR)) == -1)
+			if((tl->fd = open("/mnt/fmap/device/blobs/wal.log", O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR)) == -1)
                         	std::cout << "[REPLAY] Error with open" << std::endl;
 	}
 	else{
 		if(tl->fd == -1)
-                	if((tl->fd = open("device/raw/wal.log", O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR)) == -1)
+                	if((tl->fd = open("/mnt/fmap/device/raw/wal.log", O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR)) == -1)
                         	std::cout << "[REPLAY] Error with open" << std::endl;
 	}
 
@@ -168,7 +168,7 @@ Tinyindex *replay(){
                         	tb->setOffset(0);
                 	}
                 	else{
-                        	tb->__open((char*)"device/raw/file.txt");
+                        	tb->__open((char*)"/mnt/fmap/device/raw/file.txt");
                         	tb->setOffset(global_dev_offset);
                 	}
                 	tb->__persisted = false;

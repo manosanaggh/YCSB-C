@@ -28,9 +28,9 @@ int tb_allocate_blob(){
 		return tb->index();
 	}
 	//pthread_mutex_lock(&lock);
-	tb->__open((char*)"device/raw/file.txt");
+	tb->__open((char*)"/mnt/fmap/device/raw/file.txt");
 	int x;
-        if (access("device/raw/file.txt", F_OK) == 0 && tb->created){      
+        if (access("/mnt/fmap/device/raw/file.txt", F_OK) == 0 && tb->created){      
         	if((x = fallocate(Tinyblob::raw_fd, 0, 0, raw_size)) == -1){
 			std::cout << "[TB_ALLOCATE_BLOB] Problem with falllocate!" << std::endl;
 			return -1;
@@ -131,7 +131,7 @@ int tb_write_blob(int index, void *data){
         } 
         else{    
         	Tinyblob *tb = new Tinyblob();
-                tb->__open((char*)"device/raw/file.txt");      
+                tb->__open((char*)"/mnt/fmap/device/raw/file.txt");      
                 tb->setOffset((blobs.size() * blob_size));
                 blobs.push_back(tb);      
                 if((x = tb_write_blob(tb->index(), data)) == 0)                         
@@ -236,6 +236,7 @@ if ((dir = opendir (location)) != NULL) {
                 char final_location[30] = "";
                 strcat(final_location, location);
                 strcat(final_location, ent->d_name);
+		std::cout << final_location << std::endl;
 		int fd;
 		if((fd = open(final_location, O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR)) == -1)
 			std::cout << "[TB_INIT] Error with open" << std::endl;

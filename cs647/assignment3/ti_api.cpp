@@ -93,7 +93,7 @@ int erase(void *args){
 
 std::ifstream scan_init(void){
 	std::ifstream scanner;
-        scanner.open("device/raw/pairs.txt");
+        scanner.open("/mnt/fmap/device/raw/pairs.txt");
         if(!scanner.is_open()) { 
 		std::cout << "[SCAN_INIT] Error scanner not open!" << std::endl;                                                        
                 exit(EXIT_FAILURE);
@@ -141,12 +141,14 @@ void persist(char *location){
 	for(Tinyblob *tb : blobs)                       
                 tb->printTb();
 
+	std::cout << blobs.size() << std::endl;
+
 	tb_shutdown();
 }
 
 void recover(char *location){
-	if(mode) tb_init((char*)"device/raw/");
-	else tb_init((char*)"device/blobs/");
+	if(mode) tb_init((char*)"/mnt/fmap/device/raw/");
+	else tb_init((char*)"/mnt/fmap/device/blobs/");
 
         ti->fd = open(location, O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
 
@@ -188,4 +190,6 @@ void recover(char *location){
     	std::cout << "[RECOVER]" << std::endl;
         for(Tinyblob *tb : blobs)                       
                 tb->printTb();
+
+	std::cout << blobs.size() << std::endl;
 }

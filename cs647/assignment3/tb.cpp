@@ -17,7 +17,7 @@ Tinyblob::~Tinyblob(){
 } 
 
 void Tinyblob::setName(){
-	__name = "device/blobs/B" + std::to_string(__cnt_blob++);
+	__name = "/mnt/fmap/device/blobs/B" + std::to_string(__cnt_blob++);
 }
 
 void Tinyblob::__open(){

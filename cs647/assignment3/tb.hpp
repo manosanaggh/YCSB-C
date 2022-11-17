@@ -65,8 +65,7 @@ class Tinyblob{
 		}
 
 		inline void printTb(){
-			/*
-			std::cout << "INDEX: " << __index 
+			/*std::cout << "INDEX: " << __index 
 				<< "\tFD: " << __fd
 				<< "\tRAW_FD: " << raw_fd
 				<< "\tNAME: " << __name 

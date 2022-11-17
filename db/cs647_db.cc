@@ -23,7 +23,7 @@ void CS647DB::Init() {
 	//pthread_t threads[1024];
 
         mode = 1;
-        nprocs = 300000;
+        nprocs = 300;
         blob_size = 4096;
         raw_size = 10 * 1024L * 1024L * 1024L;
 
@@ -38,13 +38,13 @@ void CS647DB::Init() {
 		ti = replay();
 
 		if(mode){
-        		if((tl->fd = open("device/raw/wal.log", O_RDWR|O_CREAT|O_DIRECT|O_SYNC, S_IRUSR|S_IWUSR)) == -1){
+        		if((tl->fd = open("/mnt/fmap/device/raw/wal.log", O_RDWR|O_CREAT|O_DIRECT|O_SYNC, S_IRUSR|S_IWUSR)) == -1){
                 		std::cout << "[Init] Error with opening WAL" << std::endl;
 				return;
 			}
 		}
 		else{
-                        if((tl->fd = open("device/blobs/wal.log", O_RDWR|O_CREAT|O_DIRECT|O_SYNC, S_IRUSR|S_IWUSR)) == -1){
+                        if((tl->fd = open("/mnt/fmap/device/blobs/wal.log", O_RDWR|O_CREAT|O_DIRECT|O_SYNC, S_IRUSR|S_IWUSR)) == -1){
                                 std::cout << "[Init] Error with opening WAL" << std::endl;
                                 return;
                         }
@@ -60,9 +60,9 @@ void CS647DB::Init() {
 			ti = new Tinyindex();
 		}
 			if(mode)
-				recover((char*)"device/raw/pairs.txt");
+				recover((char*)"/mnt/fmap/device/raw/pairs.txt");
 			else
-				recover((char*)"device/blobs/pairs.txt");
+				recover((char*)"/mnt/fmap/device/blobs/pairs.txt");
 		//}
         	
 		for(uint32_t i = 0; i < nprocs; i++)      
@@ -79,9 +79,9 @@ void CS647DB::Close() {
 	std::cout << "CS647DB::Close" << std::endl;
 	if(allocate){
                 if(mode)
-                        persist((char*)"device/raw/pairs.txt");
+                        persist((char*)"/mnt/fmap/device/raw/pairs.txt");
                 else
-                        persist((char*)"device/blobs/pairs.txt");
+                        persist((char*)"/mnt/fmap/device/blobs/pairs.txt");
 		allocate = 0;
 		truncate();
 	}
