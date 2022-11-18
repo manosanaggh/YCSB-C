@@ -53,6 +53,15 @@ int put(void *args){
 		tl->wal_buf = "";
 		tl->buf_sz = 0;
 		checkpoint_metadata();
+                /*if(mode)
+                        persist((char*)"/mnt/fmap/device/raw/pairs.txt");
+                else
+                        persist((char*)"/mnt/fmap/device/blobs/pairs.txt");
+		truncate();
+		for(auto x : blobs){
+			delete(x);
+		}
+		blobs.clear();*/
 	}
 
 	tinfo->result = 0;
@@ -138,8 +147,8 @@ int close_scanner(std::ifstream *scanner){
 void persist(char *location){
 	checkpoint_metadata();
 
-	for(Tinyblob *tb : blobs)                       
-                tb->printTb();
+	/*for(Tinyblob *tb : blobs)                       
+                tb->printTb();*/
 
 	std::cout << blobs.size() << std::endl;
 
@@ -188,8 +197,8 @@ void recover(char *location){
 
     	//Debug
     	std::cout << "[RECOVER]" << std::endl;
-        for(Tinyblob *tb : blobs)                       
-                tb->printTb();
+        /*for(Tinyblob *tb : blobs)                       
+                tb->printTb();*/
 
 	std::cout << blobs.size() << std::endl;
 }

@@ -55,7 +55,9 @@ namespace ycsbc {
 				for(int i = 0; i < db_num; ++i){
 					rocksdb::Options options;
 
-					options.compression = rocksdb::kNoCompression;
+					/* Configuration from parallax repo */
+
+					/*options.compression = rocksdb::kNoCompression;
 					options.create_if_missing = true;
 					options.max_open_files = -1;
 					options.IncreaseParallelism();
@@ -67,8 +69,65 @@ namespace ycsbc {
 					
 					rocksdb::BlockBasedTableOptions table_options;
 					table_options.block_cache = cache;
-					options.table_factory.reset(NewBlockBasedTableFactory(table_options));
+					options.table_factory.reset(NewBlockBasedTableFactory(table_options));*/
 
+			/* Configurations A-B from cs647 as4 */
+					
+			options.compression = rocksdb::kNoCompression;
+
+			options.create_if_missing = true;
+
+			options.max_open_files = -1;
+
+			options.IncreaseParallelism();
+
+			options.use_direct_reads = true;
+
+			options.use_direct_io_for_flush_and_compaction = true;
+
+			options.compaction_readahead_size = 0;
+
+			options.writable_file_max_buffer_size = 1024 * 1024;
+
+			options.compaction_style = rocksdb::CompactionStyle::kCompactionStyleLevel;
+
+			options.level0_file_num_compaction_trigger = 4;
+
+			options.compression = rocksdb::kNoCompression;
+
+			options.create_if_missing = true;
+
+			options.use_direct_io_for_flush_and_compaction = 1;
+
+			options.use_direct_reads = 1;
+
+			options.max_write_buffer_number_to_maintain = 4;
+
+			options.num_levels = 4;
+
+			options.max_bytes_for_level_multiplier = 4;
+
+			options.max_bytes_for_level_base = 32 * 1024 * 1024;
+
+			rocksdb::BlockBasedTableOptions table_options;
+
+			table_options.filter_policy.reset(rocksdb::NewBloomFilterPolicy(10, false));
+
+			//table_options.block_cache = rocksdb::NewLRUCache(8 * 1024 * 1024); // 8MB Buffer cache
+
+			table_options.block_cache = rocksdb::NewLRUCache(4 * 1024 * 1024 * 1024); // 4GB Buffer cache
+
+			options.table_factory.reset(NewBlockBasedTableFactory(table_options));
+
+			options.max_open_files = -1;
+
+			options.target_file_size_base = 64 * 1024 * 1024;
+
+			options.target_file_size_multiplier = 1;
+
+			options.table_factory.reset(NewBlockBasedTableFactory(table_options));
+					
+					/* Rest of the constructor code */
 					std::string db_name = "/mnt/datavol/" + std::to_string(i);
 
 					rocksdb::DB *db;

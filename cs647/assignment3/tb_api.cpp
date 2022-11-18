@@ -4,6 +4,7 @@ uint32_t mode, nprocs, blob_size, global_dev_offset = 0;
 long raw_size;
 
 std::vector<Tinyblob*> blobs;
+//std::unordered_map<std::string, uint32_t> offsets;
 pthread_mutex_t lock;
 pthread_barrier_t barrier;
 
@@ -152,26 +153,26 @@ int tb_read_blob(void *args){
 	if(!mode)
 		if(blobs[ti->i]->fd() >= 0){
 			int x = pread(blobs[ti->i]->fd(), tmp_data, blob_size, ALIGNMENT);
-			pthread_mutex_lock(&lock);
+			//pthread_mutex_lock(&lock);
 			memcpy(*((char**)ti->buffer), tmp_data, blob_size+1);
-			pthread_mutex_unlock(&lock);
-        		if(ti->parallel)                       
-                		pthread_barrier_wait(&barrier); 
+			//pthread_mutex_unlock(&lock);
+        		/*if(ti->parallel)                       
+                		pthread_barrier_wait(&barrier); */
 			ti->result = x;
 			return x;
 		}
         if(Tinyblob::raw_fd >= 0){
                 int x = pread(Tinyblob::raw_fd, tmp_data, blob_size, blobs[ti->i]->offset()+ALIGNMENT);
-                pthread_mutex_lock(&lock);
+                //pthread_mutex_lock(&lock);
                 memcpy(*((char**)ti->buffer), tmp_data, blob_size+1);
-                pthread_mutex_unlock(&lock);
-        	if(ti->parallel)                       
-                	pthread_barrier_wait(&barrier); 
+                //pthread_mutex_unlock(&lock);
+        	/*if(ti->parallel)                       
+                	pthread_barrier_wait(&barrier); */
                 ti->result = x;
         	return x;
         }
-	if(ti->parallel)
-		pthread_barrier_wait(&barrier);
+	/*if(ti->parallel)
+		pthread_barrier_wait(&barrier);*/
 	ti->result = -1;
 	return -1;
 }

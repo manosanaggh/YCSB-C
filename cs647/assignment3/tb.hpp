@@ -65,14 +65,14 @@ class Tinyblob{
 		}
 
 		inline void printTb(){
-			/*std::cout << "INDEX: " << __index 
+			std::cout << "INDEX: " << __index 
 				<< "\tFD: " << __fd
 				<< "\tRAW_FD: " << raw_fd
 				<< "\tNAME: " << __name 
 				<< "\tBLOB_COUNT: " << __cnt_blob 
 				<< "\tIO_BUFFER: " << (char*)__io_buffer
 				<< "\tRAW DEVICE OFFSET: " << __offset
-				<< std::endl;*/
+				<< std::endl;
 		}
 
 		void __open();
