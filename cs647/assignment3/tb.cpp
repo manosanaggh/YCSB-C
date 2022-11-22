@@ -2,6 +2,7 @@
 
 uint32_t Tinyblob::__cnt_blob = 0;
 int Tinyblob::raw_fd = -1;
+std::string Tinyblob::DEVICE_PATH_PREFIX(DEV_PATH_PREF);
 extern uint32_t blob_size;
 
 Tinyblob::Tinyblob(){

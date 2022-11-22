@@ -92,7 +92,8 @@ int erase(void *args){
 
 std::ifstream scan_init(void){
 	std::ifstream scanner;
-        scanner.open("/mnt/fmap/device/raw/pairs.txt");
+	std::string path(Tinyblob::DEVICE_PATH_PREFIX + "raw/pairs.txt");
+        scanner.open(path);
         if(!scanner.is_open()) { 
 		std::cout << "[SCAN_INIT] Error scanner not open!" << std::endl;                                                        
                 exit(EXIT_FAILURE);
@@ -145,8 +146,14 @@ void persist(char *location){
 }
 
 void recover(char *location){
-	if(mode) tb_init((char*)"/mnt/fmap/device/raw/");
-	else tb_init((char*)"/mnt/fmap/device/blobs/");
+	if(mode){
+		std::string path(Tinyblob::DEVICE_PATH_PREFIX+"raw/");
+		tb_init((char*)path.c_str());
+	}
+	else{
+                std::string path(Tinyblob::DEVICE_PATH_PREFIX+"blobs/");
+                tb_init((char*)path.c_str());
+	}
 
         ti->fd = open(location, O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
 
@@ -158,12 +165,12 @@ void recover(char *location){
         char *tmp_data;
 	int x;
 
-        if(posix_memalign((void**)&tmp_data, ALIGNMENT, 10 * 1024L * 1024L)){ 
+        if(posix_memalign((void**)&tmp_data, ALIGNMENT, 10LU * 1024LU * 1024LU)){ 
                 std::cout << "[RECOVER] *ERROR*: posix_memalign failed!" << std::endl;
                 return;
         }
         
-        if((x = pread(ti->fd, (void *)(tmp_data), 10 * 1024L * 1024L, 0)) == -1){
+        if((x = pread(ti->fd, (void *)(tmp_data), 10LU * 1024LU * 1024LU, 0)) == -1){
                 std::cout << "[RECOVER] *ERROR* : Reading file unsuccessful!" << std::endl;
                 return;
         }

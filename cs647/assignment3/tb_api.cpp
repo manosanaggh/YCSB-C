@@ -29,9 +29,10 @@ int tb_allocate_blob(){
 		return tb->index();
 	}
 	//pthread_mutex_lock(&lock);
-	tb->__open((char*)"/mnt/fmap/device/raw/file.txt");
+	std::string path(Tinyblob::DEVICE_PATH_PREFIX+"raw/file.txt");
+	tb->__open((char*)path.c_str());
 	int x;
-        if (access("/mnt/fmap/device/raw/file.txt", F_OK) == 0 && tb->created){      
+        if (access(path.c_str(), F_OK) == 0 && tb->created){      
         	if((x = fallocate(Tinyblob::raw_fd, 0, 0, raw_size)) == -1){
 			std::cout << "[TB_ALLOCATE_BLOB] Problem with falllocate!" << std::endl;
 			return -1;
@@ -137,7 +138,8 @@ int tb_write_blob(int index, void *data){
         } 
         else{    
         	Tinyblob *tb = new Tinyblob();
-                tb->__open((char*)"/mnt/fmap/device/raw/file.txt");      
+		std::string path(Tinyblob::DEVICE_PATH_PREFIX+"raw/file.txt");
+                tb->__open((char*)path.c_str());      
                 tb->setOffset((blobs.size() * blob_size));
                 blobs.push_back(tb);      
                 if((x = tb_write_blob(tb->index(), data)) == 0)                         

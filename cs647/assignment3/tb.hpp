@@ -19,7 +19,11 @@
 #include <assert.h>
 #include <cstdio>
 
-#define ALIGNMENT 512
+#define ALIGNMENT	512
+#define DEV_PATH_PREF	"/mnt/fmap/device/"
+#define MODE		1
+#define BLOB_SIZE	4096
+#define RAW_SIZE	10 * 1024LU * 1024LU * 1024LU
 
 struct thread_info{                                                                                                                         
         int i;                                                                                 
@@ -47,6 +51,7 @@ class Tinyblob{
 		bool __free;
 		bool __persisted;
 		static int raw_fd;
+		static std::string DEVICE_PATH_PREFIX;
 
 		inline void setIndex(uint32_t index){
         		__index = index;

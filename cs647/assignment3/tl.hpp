@@ -3,8 +3,6 @@
 
 #include "ti.hpp"
 
-#define ALIGNMENT 512
-
 class Tinylog{
         private:
         public:

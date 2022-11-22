@@ -81,12 +81,16 @@ void checkpoint_metadata(){
         
         //int fd;
 	if(!mode){
-		if(ti->fd == -1)
-			ti->fd = open("/mnt/fmap/device/blobs/pairs.txt", O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
+		if(ti->fd == -1){
+			std::string path(Tinyblob::DEVICE_PATH_PREFIX+"blobs/pairs.txt");
+			ti->fd = open(path.c_str(), O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
+		}
 	}
 	else{
-		if(ti->fd == -1)
-			ti->fd = open("/mnt/fmap/device/raw/pairs.txt", O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
+		if(ti->fd == -1){
+			std::string path(Tinyblob::DEVICE_PATH_PREFIX+"raw/pairs.txt");
+			ti->fd = open(path.c_str(), O_RDWR|O_CREAT|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR);
+		}
 	}
         int x;
 
@@ -120,30 +124,36 @@ void checkpoint_metadata(){
 }
 
 int truncate(){
-        if(mode)
-		remove("/mnt/fmap/device/raw/wal.log");
-        else
-		remove("/mnt/fmap/device/blobs/wal.log");
+        if(mode){
+		std::string path1(Tinyblob::DEVICE_PATH_PREFIX+"raw/wal.log");
+		remove(path1.c_str());
+	}
+        else{
+		std::string path2(Tinyblob::DEVICE_PATH_PREFIX+"blobs/wal.log");
+		remove(path2.c_str());
+	}
 	return 0;
 }
 
 Tinyindex *replay(){
 	Tinyindex *ti = NULL;
-	if(mode && access("/mnt/fmap/device/raw/wal.log", F_OK) != 0)
+	std::string path1(Tinyblob::DEVICE_PATH_PREFIX+"raw/wal.log");
+	std::string path2(Tinyblob::DEVICE_PATH_PREFIX+"blobs/wal.log");
+	if(mode && access(path1.c_str(), F_OK) != 0)
 		return ti;
-	else if(!mode && access("/mnt/fmap/device/blobs/wal.log", F_OK) != 0)
+	else if(!mode && access(path2.c_str(), F_OK) != 0)
 		return ti;
 	ti = new Tinyindex();
 	std::string buf;
-	std::ifstream s("/mnt/fmap/device/raw/wal.log");
+	std::ifstream s(path1);
 	if(!mode){
                 if(tl->fd == -1)
-			if((tl->fd = open("/mnt/fmap/device/blobs/wal.log", O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR)) == -1)
+			if((tl->fd = open(path2.c_str(), O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR)) == -1)
                         	std::cout << "[REPLAY] Error with open" << std::endl;
 	}
 	else{
 		if(tl->fd == -1)
-                	if((tl->fd = open("/mnt/fmap/device/raw/wal.log", O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR)) == -1)
+                	if((tl->fd = open(path1.c_str(), O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR)) == -1)
                         	std::cout << "[REPLAY] Error with open" << std::endl;
 	}
 
@@ -171,7 +181,7 @@ Tinyindex *replay(){
                                 tb->setOffset(0);
                         }
                         else{
-                                tb->__open((char*)"/mnt/fmap/device/raw/file.txt");
+                                tb->__open((char*)path1.c_str());
                                 tb->setOffset(global_dev_offset);
                         }
                         tb->__persisted = false;

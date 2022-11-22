@@ -20,9 +20,9 @@ extern void set_alarm();
 namespace ycsbc {
 
 void CS647DB::Init() {
-        mode = 1;
-        blob_size = 4096;
-        raw_size = 10 * 1024L * 1024L * 1024L;
+        mode = MODE;
+        blob_size = BLOB_SIZE;
+        raw_size = RAW_SIZE;
 
         if (pthread_rwlock_init(&rwlock, NULL) != 0) {
                 printf("\n rwlock init has failed\n");

@@ -113,9 +113,9 @@ namespace ycsbc {
 
 			table_options.filter_policy.reset(rocksdb::NewBloomFilterPolicy(10, false));
 
-			//table_options.block_cache = rocksdb::NewLRUCache(8 * 1024 * 1024); // 8MB Buffer cache
+			//table_options.block_cache = rocksdb::NewLRUCache(8LU * 1024LU * 1024LU); // 8MB Buffer cache
 
-			table_options.block_cache = rocksdb::NewLRUCache(4 * 1024 * 1024 * 1024); // 4GB Buffer cache
+			table_options.block_cache = rocksdb::NewLRUCache(GB(4LU)); // 4GB Buffer cache
 
 			options.table_factory.reset(NewBlockBasedTableFactory(table_options));
 

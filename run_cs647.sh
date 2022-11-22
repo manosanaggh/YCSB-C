@@ -1,4 +1,4 @@
-sudo umount /mnt/fmap
+: 'sudo umount /mnt/fmap
 sudo umount /mnt/datavol
 sudo mdadm --stop /dev/md0
 sudo mdadm --zero-superblock /dev/nvme0n1 /dev/nvme1n1 /dev/nvme3n1 /dev/nvme4n1
@@ -12,11 +12,13 @@ sudo mdadm --create --verbose /dev/md0 --level=stripe --chunk=1024 --raid-device
 
 sudo mkfs.ext4 /dev/md0
 sudo mount /dev/md0 /mnt/fmap
+'
+DEV_PATH_PREF=/mnt/fmap/device/
 
-sudo rm -rf /mnt/fmap/device
-sudo mkdir -p /mnt/fmap/device
-sudo mkdir -p /mnt/fmap/device/blobs
-sudo mkdir -p /mnt/fmap/device/raw
+#sudo rm -rf $DEV_PATH_PREF
+sudo mkdir -p $DEV_PATH_PREF
+sudo mkdir -p $DEV_PATH_PREF/blobs
+sudo mkdir -p $DEV_PATH_PREF/raw
 rm -rf err
 rm -rf out
 make

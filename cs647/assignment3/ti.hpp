@@ -8,9 +8,6 @@
 #include "tb.hpp"
 #include <boost/algorithm/string.hpp>
 
-#define ALIGNMENT 512
-#define MAX_BLOBS 32
-
 class Thread_info{
 	private:
 	public:
