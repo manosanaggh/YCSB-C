@@ -12,7 +12,7 @@ $(SUBDIRS):
 	$(MAKE) -C $@
 
 $(EXEC): $(wildcard *.cc) $(OBJECTS)
-	$(CC) $(CFLAGS) $^ $(LDFLAGS) ../rocksdb/librocksdb.a /lib/x86_64-linux-gnu/libz.so redis/hiredis/libhiredis.a -o $@
+	$(CC) $(CFLAGS) $^ $(LDFLAGS) ../rocksdb/librocksdb.a /lib64/libz.so redis/hiredis/libhiredis.a -o $@
 
 clean:
 	for dir in $(SUBDIRS); do \

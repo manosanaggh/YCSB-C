@@ -31,6 +31,8 @@ void append(std::string wal_buf){
                 return;                                                                    
         }    	
 	tl->offset += blob_size;
+
+	free(tmp_data);
 }
 
 void handler(int sig, siginfo_t *info, void *ucontext){ 
@@ -113,6 +115,8 @@ void checkpoint_metadata(){
                 std::cout << "[CHECKPOINT] *ERROR* : Writing file unsuccessful!" << std::endl;
                 return;
         }
+
+	free(tmp_data);
 }
 
 int truncate(){
@@ -130,10 +134,8 @@ Tinyindex *replay(){
 	else if(!mode && access("/mnt/fmap/device/blobs/wal.log", F_OK) != 0)
 		return ti;
 	ti = new Tinyindex();
-        char *tmp_data;
-	uint32_t wal_offset = 0;
-	int x;
-        //int fd;
+	std::string buf;
+	std::ifstream s("/mnt/fmap/device/raw/wal.log");
 	if(!mode){
                 if(tl->fd == -1)
 			if((tl->fd = open("/mnt/fmap/device/blobs/wal.log", O_RDWR|O_DIRECT|O_DSYNC, S_IRUSR|S_IWUSR)) == -1)
@@ -145,48 +147,41 @@ Tinyindex *replay(){
                         	std::cout << "[REPLAY] Error with open" << std::endl;
 	}
 
-        if(posix_memalign((void**)&tmp_data, ALIGNMENT, 10 * 1024L * 1024L)){   
-                std::cout << "[REPLAY] *ERROR*: posix_memalign failed!" << std::endl;                 
-                return NULL;                                                                   
-        }
-        if((x = pread(tl->fd, (void *)(tmp_data), blob_size, wal_offset)) == -1){                              
-                std::cout << "[REPLAY] *ERROR* : Reading file unsuccessful!" << std::endl;
-                return NULL;                                              
-        }
+	std::string s2("");
+	uint32_t cnt = 0;
+	std::string key("");
 
-	while(strcmp(tmp_data,"") != 0){
-		std::string input(tmp_data);
-    		std::vector<std::string> result;
-   		boost::split(result, input, boost::is_any_of("\n"));
- 
-    		for (int i = 0; i < (int)(result.size()-1); i++){
-                	Tinyblob *tb = new Tinyblob();
-                	tb->__free = false;
-                	blobs.push_back(tb);
-                	if(!mode){
-                        	tb->__open();
-                        	tb->setOffset(0);
-                	}
-                	else{
-                        	tb->__open((char*)"/mnt/fmap/device/raw/file.txt");
-                        	tb->setOffset(global_dev_offset);
-                	}
-                	tb->__persisted = false;
-                	global_dev_offset += blob_size;
-        		std::string input2(result[i]);                                                                                        				std::vector<std::string> result2;         
-        		boost::split(result2, input2, boost::is_any_of(","));
-        		std::string key;
-        		key = result2[0];
-			strcpy((char*)tb->__io_buffer, result2[1].c_str());
-			//std::cout << result2[0] << "," << result2[1] << std::endl;
-        		ti->__kv_store[key].push_back(tb);        
+	while(getline(s, buf)){
+		if(!strstr(buf.c_str(), "field") && !strstr(buf.c_str(), "user"))
+			continue;
 
-    		}
-		wal_offset += blob_size;
-        	if((x = pread(tl->fd, (void *)(tmp_data), blob_size, wal_offset)) == -1){                            
-                	std::cout << "[REPLAY] *ERROR* : Reading file unsuccessful!" << std::endl;
-                	return NULL;                                              
-        	}
+		if(!strstr(buf.c_str(), "user")){
+			s2 += buf;
+			cnt++;
+		}
+		else
+			key = buf;
+
+		if(cnt == 10 && !strstr(buf.c_str(), "user")){
+                        Tinyblob *tb = new Tinyblob();
+                        tb->__free = false;
+                        blobs.push_back(tb);
+                        if(!mode){
+                                tb->__open();
+                                tb->setOffset(0);
+                        }
+                        else{
+                                tb->__open((char*)"/mnt/fmap/device/raw/file.txt");
+                                tb->setOffset(global_dev_offset);
+                        }
+                        tb->__persisted = false;
+                        global_dev_offset += blob_size;
+                        strcpy((char*)tb->__io_buffer, s2.c_str());
+                        ti->__kv_store[key].push_back(tb);
+			s2.clear();
+			cnt = 0;
+		}
 	}
+
 	return ti;
 }

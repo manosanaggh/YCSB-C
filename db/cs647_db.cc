@@ -10,7 +10,7 @@
 
 extern pthread_barrier_t barrier;
 extern Tinyindex *ti;
-extern uint32_t mode, nprocs, blob_size;
+extern uint32_t mode, blob_size;
 extern long raw_size;
 extern pthread_rwlock_t rwlock;
 uint32_t allocate = 0;
@@ -20,19 +20,16 @@ extern void set_alarm();
 namespace ycsbc {
 
 void CS647DB::Init() {
-	//pthread_t threads[1024];
-
         mode = 1;
-        nprocs = 350000;
         blob_size = 4096;
         raw_size = 10 * 1024L * 1024L * 1024L;
 
-        /*if (pthread_rwlock_init(&rwlock, NULL) != 0) {
+        if (pthread_rwlock_init(&rwlock, NULL) != 0) {
                 printf("\n rwlock init has failed\n");
                 return;
         }             
-        pthread_barrier_init(&barrier, NULL, nprocs+1);*/
-
+	pthread_barrier_init(&barrier, NULL, 1);
+	pthread_rwlock_wrlock(&rwlock);
 	if(!ti){
 		tl = new Tinylog();
 		ti = replay();
@@ -51,7 +48,7 @@ void CS647DB::Init() {
 		}
 		
 		int x;
-		if((x = fallocate(tl->fd, 0, 0, raw_size)) == -1){
+		if(!tl->fd && (x = fallocate(tl->fd, 0, 0, raw_size)) == -1){
 			std::cout << "[Init] WAL allocation error!" << std::endl;
 			return;
 		}
@@ -64,29 +61,29 @@ void CS647DB::Init() {
 			else
 				recover((char*)"/mnt/fmap/device/blobs/pairs.txt");
         	
-		for(uint32_t i = 0; i < nprocs; i++)      
-                	//pthread_create(&threads[i], NULL, (void* (*)(void*))&tb_allocate_blob, NULL);
-			tb_allocate_blob();
-        	//pthread_barrier_wait(&barrier);
 		allocate = 1;
 
 		//set_alarm();
 	}
+	pthread_rwlock_unlock(&rwlock);
+	pthread_barrier_wait(&barrier);
 }
 
 void CS647DB::Close() {
+	        pthread_rwlock_wrlock(&rwlock);
 	std::cout << "CS647DB::Close" << std::endl;
-	if(allocate){
+//	if(allocate){
                 if(mode)
                         persist((char*)"/mnt/fmap/device/raw/pairs.txt");
                 else
                         persist((char*)"/mnt/fmap/device/blobs/pairs.txt");
 		allocate = 0;
 		truncate();
-	}
-        
-	//pthread_barrier_destroy(&barrier);
-        //pthread_rwlock_destroy(&rwlock);
+//	}
+        pthread_rwlock_unlock(&rwlock);
+        pthread_barrier_wait(&barrier);
+	pthread_barrier_destroy(&barrier);
+        pthread_rwlock_destroy(&rwlock);
 	std::cout << "Closing db" << std::endl;
 }
 
@@ -94,27 +91,33 @@ void CS647DB::Close() {
 int CS647DB::Read(const std::string &table, const std::string &key,
         const std::vector<std::string> *fields,
         std::vector<KVPair> &result) {
-
+        pthread_rwlock_wrlock(&rwlock);
 	std::vector<Tinyblob*> *pv = NULL;
         if((pv = get(key)) != NULL){
                 for(auto x : *pv)
 			result.push_back(std::make_pair(key, std::string((char*)x->__io_buffer)));
 	}
+        pthread_rwlock_unlock(&rwlock);
+        pthread_barrier_wait(&barrier);
 	return 0;
 }
 
 int CS647DB::Scan(const std::string &table, const std::string &key,
            int len, const std::vector<std::string> *fields,
            std::vector<std::vector<KVPair>> &result){
-	//if(ti->__kv_store[key].empty())
-	//	return 0;
+	        pthread_rwlock_wrlock(&rwlock);
+	if(ti->__kv_store[key].empty()){
+        pthread_rwlock_unlock(&rwlock);
+        pthread_barrier_wait(&barrier);
+		return 1;
+	}
 
 	std::vector<KVPair> result2;
 	static uint32_t x = 0;
 	ti->scanner = scan_init();
         if(!ti->scanner.is_open()) {                                                             
 		std::cout << "[SCAN] Error scanner not open!" << std::endl;      
-		return -1;
+		return 1;
         }  
 
 	std::cout << "[SCAN] going on..." << std::endl;
@@ -123,51 +126,54 @@ int CS647DB::Scan(const std::string &table, const std::string &key,
 		for(auto x : *(get_scan_value(ti->next_pair)))
 			result2.push_back(std::make_pair(get_scan_key(ti->next_pair), std::string((char*)x->__io_buffer)));
 		result.push_back(result2);
-		if(get_next(&ti->scanner) == -1)
-			return 0;
+		if(get_next(&ti->scanner) == -1){
+        pthread_rwlock_unlock(&rwlock);
+        pthread_barrier_wait(&barrier);
+			return 1;
+		}
 	}
+        pthread_rwlock_unlock(&rwlock);
+        pthread_barrier_wait(&barrier);
 	return close_scanner(&ti->scanner);
 }
 
 int CS647DB::Update(const std::string &table, const std::string &key,
              std::vector<KVPair> &values){
-        if(ti->__kv_store[key].empty())
-                return 0;
-        //pthread_t threads[1024];
-
-        //pthread_barrier_destroy(&barrier);
-        //pthread_barrier_init(&barrier, NULL, 2);
+	        pthread_rwlock_wrlock(&rwlock);
+        if(ti->__kv_store[key].empty()){
+        pthread_rwlock_unlock(&rwlock);
+        pthread_barrier_wait(&barrier);
+                return 1;
+	}
 
         Thread_info *tinfo = new Thread_info();                 
         tinfo->key = key;   
 
         for(int i = 0; i < (int)values.size(); i++){
 		tinfo->value += values[i].first + ":" + values[i].second + "\n";
-                //pthread_create(&threads[i], NULL, (void* (*)(void*))&put, tinfo);
-                //pthread_barrier_wait(&barrier);
         }
 	strcpy((char*)(ti->__kv_store[tinfo->key][0])->__io_buffer, tinfo->value.c_str());
         //if(tinfo->result == -1)
           //      std::cout << "[UPDATE] No free blobs!" << std::endl;
         //else
   //              std::cout << "[UPDATE] Successful!" << std::endl;
+        pthread_rwlock_unlock(&rwlock);
+        pthread_barrier_wait(&barrier);
         return 0;
 }
 
 int CS647DB::Insert(const std::string &table, const std::string &key,
              std::vector<KVPair> &values){
-	if(!ti->__kv_store[key].empty())
-		return -1;
-	//pthread_t threads[1024];
-
-        //pthread_barrier_destroy(&barrier);
-        //pthread_barrier_init(&barrier, NULL, 2);
+	        pthread_rwlock_wrlock(&rwlock);
+	if(!ti->__kv_store[key].empty()){
+        pthread_rwlock_unlock(&rwlock);
+        pthread_barrier_wait(&barrier);
+		return 1;
+	}
 	Thread_info *tinfo = new Thread_info();
 	tinfo->key = key;
 	for(int i = 0; i < (int)values.size(); i++){
                 tinfo->value += values[i].first + ":" + values[i].second + "\n";                  
-                //pthread_create(&threads[i], NULL, (void* (*)(void*))&put, tinfo);
-                //pthread_barrier_wait(&barrier);
 	}
         put(tinfo);
 	/*if(tinfo->result == -1)
@@ -175,17 +181,24 @@ int CS647DB::Insert(const std::string &table, const std::string &key,
 	else
 		std::cout << "[INSERT] Successful!" << std::endl;
 */
+        pthread_rwlock_unlock(&rwlock);
+        pthread_barrier_wait(&barrier);
 	return 0;
 }       
 
 int CS647DB::Delete(const std::string &table, const std::string &key){
+	        pthread_rwlock_wrlock(&rwlock);
         Thread_info *tinfo = new Thread_info();                                               
         tinfo->key = key;
 
 	if(erase(tinfo) == -1){
-		return -1;
+        pthread_rwlock_unlock(&rwlock);
+        pthread_barrier_wait(&barrier);
+		return 1;
 	}
 	std::cout << "[DELETE] going on..." << std::endl;
+        pthread_rwlock_unlock(&rwlock);
+        pthread_barrier_wait(&barrier);
 	return 0;
 }
 

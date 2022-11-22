@@ -10,11 +10,11 @@ extern uint32_t blob_size, mode;
 extern std::vector<Tinyblob*> blobs;
 extern long raw_size;
 
-//Multithreaded
 int put(void *args){
 	Thread_info *tinfo = (Thread_info*)args;
 	//pthread_rwlock_wrlock(&rwlock);
 	int i;
+	tb_allocate_blob();
 	for(i = 0; i < (int)ti->__kv_store[tinfo->key].size(); i++){
 		Tinyblob *tb = ti->__kv_store[tinfo->key][i];
 		if(tb->is_free()){
@@ -43,25 +43,16 @@ int put(void *args){
 	}
 	//pthread_rwlock_unlock(&rwlock);
         // pthread_barrier_wait(&barrier);
-	if(tl->buf_sz < 19){
-		tl->wal_buf += tinfo->key + "," + tinfo->value + "\n";
+	if(tl->buf_sz < 4){
+		tl->wal_buf += tinfo->key + "\n" + tinfo->value;
 		tl->buf_sz++;
 	}
 	else{
-		tl->wal_buf += tinfo->key + "," + tinfo->value + "\n";
+		tl->wal_buf += tinfo->key + "\n" + tinfo->value;
 		append(tl->wal_buf);
 		tl->wal_buf = "";
 		tl->buf_sz = 0;
 		checkpoint_metadata();
-                /*if(mode)
-                        persist((char*)"/mnt/fmap/device/raw/pairs.txt");
-                else
-                        persist((char*)"/mnt/fmap/device/blobs/pairs.txt");
-		truncate();
-		for(auto x : blobs){
-			delete(x);
-		}
-		blobs.clear();*/
 	}
 
 	tinfo->result = 0;
@@ -74,7 +65,6 @@ std::vector<Tinyblob*> *get(std::string key){
 	return &(ti->__kv_store[key]);
 }
 
-//Multithreaded
 int erase(void *args){
 	Thread_info *tinfo = (Thread_info*)args;
         uint32_t g = 0;
@@ -111,7 +101,6 @@ std::ifstream scan_init(void){
 	return scanner;
 }
 
-//Multithreaded
 int get_next(std::ifstream *scanner){
 	//pthread_rwlock_wrlock(&rwlock);
 	if(std::getline(*scanner, ti->next_pair)){
@@ -147,8 +136,8 @@ int close_scanner(std::ifstream *scanner){
 void persist(char *location){
 	checkpoint_metadata();
 
-	/*for(Tinyblob *tb : blobs)                       
-                tb->printTb();*/
+	for(Tinyblob *tb : blobs)                       
+                tb->printTb();
 
 	std::cout << blobs.size() << std::endl;
 
@@ -179,9 +168,6 @@ void recover(char *location){
                 return;
         }
 
-	//Debug
-	//std::cout << "[RECOVER] " << tmp_data << std::endl;
-
 	std::string input(tmp_data);
     std::vector<std::string> result;
     boost::split(result, input, boost::is_any_of("\n"));
@@ -197,8 +183,9 @@ void recover(char *location){
 
     	//Debug
     	std::cout << "[RECOVER]" << std::endl;
-        /*for(Tinyblob *tb : blobs)                       
-                tb->printTb();*/
+        for(Tinyblob *tb : blobs)                       
+                tb->printTb();
 
 	std::cout << blobs.size() << std::endl;
+	free(tmp_data);
 }
