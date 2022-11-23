@@ -64,7 +64,7 @@ void CS647DB::Init() {
         	
 		allocate = 1;
 
-		for(int i = 0; i < 60000; i++)
+		for(int i = 0; i < NUM_BLOBS; i++)
 			tb_allocate_blob();
 
 		//set_alarm();

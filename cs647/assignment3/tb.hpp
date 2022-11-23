@@ -19,11 +19,12 @@
 #include <assert.h>
 #include <cstdio>
 
-#define ALIGNMENT	512
-#define DEV_PATH_PREF	"/mnt/fmap/device/"
-#define MODE		1
-#define BLOB_SIZE	4096
-#define RAW_SIZE	10 * 1024LU * 1024LU * 1024LU
+#define ALIGNMENT	512 //alignment for DIRECT IO/DMA, to afhnete 512
+#define DEV_PATH_PREF	"/mnt/fmap/device/" //to path gia to store
+#define MODE		1 //0 for multiple file blobs, 1 for single
+#define BLOB_SIZE	4096 //IO-blob size
+#define RAW_SIZE	10 * 1024LU * 1024LU * 1024LU //size of MODE=1 single file
+#define NUM_BLOBS	120000 //Number of newly allocated blobs
 
 struct thread_info{                                                                                                                         
         int i;                                                                                 

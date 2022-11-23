@@ -22,4 +22,4 @@ sudo mkdir -p $DEV_PATH_PREF/raw
 rm -rf err
 rm -rf out
 make
-sudo ./ycsbc -db cs647 -threads 1 -P workloads/workloada.spec $1 > err 2>&1 > out
+sudo ./ycsbc -db cs647 -threads 1 -P workloads/workloadf.spec $1 > err 2>&1 > out
