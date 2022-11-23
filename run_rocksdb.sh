@@ -1,4 +1,4 @@
-sudo rm -rf /mnt/datavol
+: 'sudo rm -rf /mnt/datavol
 sudo mkdir -p /mnt/datavol
 
 sudo umount /mnt/datavol
@@ -15,8 +15,8 @@ sudo mdadm --create --verbose /dev/md0 --level=stripe --chunk=1024 --raid-device
 
 sudo mkfs.ext4 /dev/md0
 sudo mount /dev/md0 /mnt/datavol
-
+'
 rm -rf err                                                                                        
 rm -rf out                                                          
 make                                                                 
-sudo ./ycsbc -db rocksdb -threads 1 -P workloads/workloada.spec $1 > err 2>&1 > out
+sudo ./ycsbc -db rocksdb -threads 1 -P workloads/workloade.spec $1 > err 2>&1 > out
