@@ -77,6 +77,8 @@ class Tinyblob{
 				<< "\tBLOB_COUNT: " << __cnt_blob 
 				<< "\tIO_BUFFER: " << (char*)__io_buffer
 				<< "\tRAW DEVICE OFFSET: " << __offset
+				<< "\tPERSISTED: " << __persisted
+				<< "\tFREE: " << __free
 				<< std::endl;
 		}
 

@@ -77,8 +77,12 @@ void tb_free_blob(int index){
 }
 
 int tb_write_blob(int index, void *data){  
-	if(blobs[index]->__persisted)
+	if(blobs[index]->__persisted){
+                //free(blobs[index]->__io_buffer);
+		//if(posix_memalign(&(blobs[index]->__io_buffer), ALIGNMENT, blob_size))
+		//	std::cout << "posix_memalign failed!" << std::endl;
 		return 0;
+	}
 	char *tmp_data;
 	int x;
 	if(posix_memalign((void**)&tmp_data, ALIGNMENT, blob_size))
@@ -100,6 +104,7 @@ int tb_write_blob(int index, void *data){
 				std::cout << "posix_memalign failed!" << std::endl;
                         tb_flush();       
 			blobs[index]->__free = false;
+			blobs[index]->__persisted = true;
 			free(tmp_data);
                         return x;
                 }
@@ -114,7 +119,6 @@ int tb_write_blob(int index, void *data){
 			return x;
 		}
         }
-
         if(pread(Tinyblob::raw_fd, tmp_data, blob_size, blobs[index]->offset()+0) == -1)
 		std::cout << "read failed!" << std::endl;
 	
@@ -133,6 +137,7 @@ int tb_write_blob(int index, void *data){
                 	std::cout << "posix_memalign failed!" << std::endl;
 		tb_flush();
 		blobs[index]->__free = false;
+		blobs[index]->__persisted = true;
 		free(tmp_data);
                 return x;                    
         } 
@@ -177,16 +182,22 @@ int tb_read_blob(void *args){
 }
 
 void tb_flush(){
-	uint32_t i;
-	for(i = 0; i < Tinyblob::cnt_blob(); i++){
-		int fd = blobs[i]->fd();
-		if(fd >= 0){
-			if(fsync(fd) == 0) 
+	if(!mode)
+		for(auto x : blobs){
+			if(x->fd() >= 0){
+				if(fsync(x->fd()) == 0) 
+					return;
+				else 
+					exit(EXIT_FAILURE);
+			}
+		}
+	else
+		if(Tinyblob::raw_fd > 0){
+                        if(fsync(Tinyblob::raw_fd) == 0)
 				return;
-			else 
+			else
 				exit(EXIT_FAILURE);
 		}
-	}
 }
 
 void tb_shutdown(){

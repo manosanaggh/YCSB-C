@@ -13,6 +13,7 @@ extern Tinyindex *ti;
 extern uint32_t mode, blob_size;
 extern long raw_size;
 extern pthread_rwlock_t rwlock;
+extern std::vector<Tinyblob*>blobs;
 uint32_t allocate = 0;
 extern Tinylog *tl;
 extern void set_alarm();
@@ -63,6 +64,9 @@ void CS647DB::Init() {
         	
 		allocate = 1;
 
+		for(int i = 0; i < 60000; i++)
+			tb_allocate_blob();
+
 		//set_alarm();
 	}
 	pthread_rwlock_unlock(&rwlock);
@@ -72,14 +76,14 @@ void CS647DB::Init() {
 void CS647DB::Close() {
 	        pthread_rwlock_wrlock(&rwlock);
 	std::cout << "CS647DB::Close" << std::endl;
-//	if(allocate){
+	if(allocate){
                 if(mode)
                         persist((char*)"/mnt/fmap/device/raw/pairs.txt");
                 else
                         persist((char*)"/mnt/fmap/device/blobs/pairs.txt");
 		allocate = 0;
 		truncate();
-//	}
+	}
         pthread_rwlock_unlock(&rwlock);
         pthread_barrier_wait(&barrier);
 	pthread_barrier_destroy(&barrier);
@@ -113,15 +117,13 @@ int CS647DB::Scan(const std::string &table, const std::string &key,
 	}
 
 	std::vector<KVPair> result2;
-	static uint32_t x = 0;
 	ti->scanner = scan_init();
         if(!ti->scanner.is_open()) {                                                             
 		std::cout << "[SCAN] Error scanner not open!" << std::endl;      
 		return 1;
         }  
 
-	std::cout << "[SCAN] going on..." << std::endl;
-	std::cout << x++ << std::endl;
+	//std::cout << "[SCAN] going on..." << std::endl;
 	for(int i = 0; i < len; i++){
 		for(auto x : *(get_scan_value(ti->next_pair)))
 			result2.push_back(std::make_pair(get_scan_key(ti->next_pair), std::string((char*)x->__io_buffer)));
@@ -129,8 +131,10 @@ int CS647DB::Scan(const std::string &table, const std::string &key,
 		if(get_next(&ti->scanner) == -1){
         pthread_rwlock_unlock(&rwlock);
         pthread_barrier_wait(&barrier);
+			std::cout << "return" << std::endl;
 			return 1;
 		}
+		//std::cout << i << std::endl;
 	}
         pthread_rwlock_unlock(&rwlock);
         pthread_barrier_wait(&barrier);
@@ -153,6 +157,7 @@ int CS647DB::Update(const std::string &table, const std::string &key,
 		tinfo->value += values[i].first + ":" + values[i].second + "\n";
         }
 	strcpy((char*)(ti->__kv_store[tinfo->key][0])->__io_buffer, tinfo->value.c_str());
+	ti->__kv_store[tinfo->key][0]->__persisted = false;
         //if(tinfo->result == -1)
           //      std::cout << "[UPDATE] No free blobs!" << std::endl;
         //else
@@ -197,6 +202,7 @@ int CS647DB::Delete(const std::string &table, const std::string &key){
 		return 1;
 	}
 	std::cout << "[DELETE] going on..." << std::endl;
+	ti->__kv_store[tinfo->key][0]->__free = true;
         pthread_rwlock_unlock(&rwlock);
         pthread_barrier_wait(&barrier);
 	return 0;

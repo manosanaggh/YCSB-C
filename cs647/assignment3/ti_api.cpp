@@ -14,7 +14,7 @@ int put(void *args){
 	Thread_info *tinfo = (Thread_info*)args;
 	//pthread_rwlock_wrlock(&rwlock);
 	int i;
-	tb_allocate_blob();
+	//tb_allocate_blob();
 	for(i = 0; i < (int)ti->__kv_store[tinfo->key].size(); i++){
 		Tinyblob *tb = ti->__kv_store[tinfo->key][i];
 		if(tb->is_free()){
@@ -107,6 +107,7 @@ int get_next(std::ifstream *scanner){
 	if(std::getline(*scanner, ti->next_pair)){
 	//	pthread_rwlock_unlock(&rwlock);
 	//	pthread_barrier_wait(&barrier);
+		//std::cout << "next" << std::endl;
 		return 0;
 	}
 	//pthread_rwlock_unlock(&rwlock);
@@ -137,8 +138,10 @@ int close_scanner(std::ifstream *scanner){
 void persist(char *location){
 	checkpoint_metadata();
 
-	for(Tinyblob *tb : blobs)                       
-                tb->printTb();
+	/*for(Tinyblob *tb : blobs)                       
+                tb->printTb();*/
+
+	std::cout << "[PERSIST]" << std::endl;
 
 	std::cout << blobs.size() << std::endl;
 
@@ -190,8 +193,8 @@ void recover(char *location){
 
     	//Debug
     	std::cout << "[RECOVER]" << std::endl;
-        for(Tinyblob *tb : blobs)                       
-                tb->printTb();
+        /*for(Tinyblob *tb : blobs)                       
+                tb->printTb();*/
 
 	std::cout << blobs.size() << std::endl;
 	free(tmp_data);
