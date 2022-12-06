@@ -15,7 +15,7 @@ sudo mount /dev/md0 /mnt/fmap
 '
 DEV_PATH_PREF=/mnt/fmap/device/
 
-#sudo rm -rf $DEV_PATH_PREF
+sudo rm -rf $DEV_PATH_PREF
 sudo mkdir -p $DEV_PATH_PREF
 sudo mkdir -p $DEV_PATH_PREF/blobs
 sudo mkdir -p $DEV_PATH_PREF/raw
